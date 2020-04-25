@@ -1,0 +1,7 @@
+language = en
+randomise = no
+galaxy-radius-x = 50
+galaxy-radius-y = 50
+system-count = 100
+create = no
+log-folder = log

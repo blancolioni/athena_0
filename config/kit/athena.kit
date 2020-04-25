@@ -1,0 +1,240 @@
+package Athena is
+
+for Athena'Database_Package_Name use "Athena.Db";
+for Athena'Handle_Package_Name use "Athena.Handles";
+
+type Athena.Money.Money_Type is new Long_Float
+   with To_Database => To_Real,
+        From_Database => To_Money,
+        To_String => Image,
+        From_String => Value;
+
+type Athena.Money.Price_Type is new Long_Float
+   with To_Database => To_Real,
+        From_Database => To_Price,
+        To_String => Image,
+        From_String => Value;
+
+record Has_Identifier is
+    unique key Identifier : Fixed_String (8);
+end Has_Identifier;
+
+record Has_Name is
+    key Name : String (32) is Display;
+end Has_Name;
+
+record Next_Identifier is
+    Next : Fixed_String (8);
+end Next_Identifier;
+
+record Localised is
+    unique key Tag : String (16) is Display;
+end Localised;
+
+record Turn is
+    key Turn_Number : Natural;
+    key Current : Boolean;
+end Turn;
+
+record Technology : Localised;
+
+record Empire : Has_Identifier is
+    Name      : String (64) is Display;
+    Plural    : String (64);
+    Adjective : String (64);
+    Cash      : Money_Type;
+    Debt      : Money_Type;
+    RGB       : Natural;
+end Empire;
+
+record Empire_Tec is
+    key Empire;
+    Technology;
+    Investment : Long_Float;
+    Level      : Long_Float;
+    unique key Empire_Tec with Empire, Technology;
+end Empire_Tec;
+
+record Fleet : Has_Identifier, Has_Name is
+    key Empire;
+end Fleet;
+
+record Manager : Localised is
+    Priority : Positive;
+end Manager;
+
+record System_Fleets is
+    unique key Empire;
+    Scouts     : Fleet;
+    Transports : Fleet;
+    Defenders  : Fleet;
+    Attackers  : Fleet;
+end System_Fleets;
+
+record Empire_Manager is
+    key Empire;
+    Manager;
+    Fleet;
+    Enabled : Boolean;
+end Empire_Manager;
+
+record Star : Has_Identifier, Has_Name is
+    X                 : Long_Float;
+    Y                 : Long_Float;
+    key Core_Distance : Long_Float;
+    key Owner         : Empire;
+    Space             : Positive;
+    Resource          : Long_Float;
+    Habitability      : Long_Float;
+end Star;    
+
+record Empire_Capital is
+    unique key Empire;
+    key Star;
+end Empire_Capital;
+
+record Star_Distance is
+    key From : Star;
+    To : Star;
+    Distance : Long_Float;
+    unique key Star_Distance with From, To;
+end Star_Distance;
+
+record Star_Knowledge is
+    key Star;
+    key Empire;
+    Visited     : Boolean;
+    Colonizing  : Boolean;
+    unique key Star_Knowledge with Star, Empire;
+end Star_Knowledge;
+    
+record Colony is
+    unique key Star;
+    key Empire;
+    Construct    : Long_Float;
+    Pop          : Long_Float;
+    Colonists    : Long_Float;
+    Industry     : Long_Float;
+    Material     : Long_Float;
+end Colony;
+
+record Order is
+    Turn;
+    key Empire;
+    Priority     : Positive;
+    key Priority_Order with Turn, Empire, Priority;
+end Order;
+
+type Colony_Order_Category is (Build_Industry, Produce_Material);
+
+record Colony_Order : Order is
+    Colony;
+    Category : Colony_Order_Category;
+    Value    : Long_Float;
+end Colony_Order;
+
+type Cargo_Type is (Colonists, Industry, Material);
+
+record Transport_Order : Order is
+    From      : Star;
+    To        : Star;
+    Cargo     : Cargo_Type;
+    Quantity  : Long_Float;
+end Transport_Order;
+
+record Research_Order : Order is
+    Technology;
+    Construct : Long_Float;
+end Research_Order;
+
+record Component : Localised is
+    key Is_Drive   : Boolean;
+    key Is_Shield  : Boolean;
+    key Is_Cargo   : Boolean;
+    key Is_Repair  : Boolean;
+    key Is_Beam    : Boolean;
+    key Is_Missile : Boolean;
+    Technology;
+end Component;
+
+record Ship_Design : Has_Identifier, Has_Name is
+    key Empire;
+end Ship_Design;
+
+record System_Designs is
+    key Empire;
+    Scout      : Ship_Design;
+    Transport  : Ship_Design;
+    Defender   : Ship_Design;
+    Destroyer  : Ship_Design;
+    Cruiser    : Ship_Design;
+    Battleship : Ship_Design;
+    Carrier    : Ship_Design;
+end System_Designs;
+
+record Design_Component is
+    key Ship_Design;
+    Component;
+    Power    : Long_Float;
+    Count    : Natural;
+end Design_Component;
+
+record Ship : Has_Identifier, Has_Name is
+    key Empire;
+    key Star;
+    key Fleet;
+    key Destination : Star;
+    First_Order : Natural;
+    Last_Order  : Natural;
+    Progress    : Long_Float;
+    Experience  : Long_Float;
+    Colonists   : Long_Float;
+    Industry    : Long_Float;
+    Material    : Long_FLoat;
+    key Ship_Star with Empire, Star;
+    key Ship_Destination with Empire, Destination;
+end Ship;
+
+record Ship_Component is
+    key Ship;
+    Component;
+    Design_Component;
+    Tec_Level : Long_Float;
+    Condition : Long_Float;
+end Ship_Component;
+
+type Ship_Action is (Load, Unload, Move);
+
+record Ship_Order is
+    Action : Ship_Action;
+    Ship;
+    Sequence : Positive;
+    Cargo    : Cargo_Type;
+    Quantity : Long_Float;
+    Star;
+    unique key Ship_Order with Ship, Sequence;
+end Ship_Order;
+
+record Upgrade_Order : Order is
+    Ship_Component;
+end Upgrade_Order;
+
+record Repair_Order : Order is
+    Ship_Component;
+end Repair_Order;
+
+record Ship_Build_Order : Order is
+    Ship_Design;
+    Fleet;
+    Send_To      : Star;
+end Ship_Build_Order;
+
+record Ship_Journey is
+    key Turn;
+    key Ship;
+    From     : Star;
+    To       : Star;
+    Progress : Long_Float;
+end Ship_Journey;
+
+end Athena;
