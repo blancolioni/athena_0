@@ -129,12 +129,13 @@ package body Athena.Ships is
      (Design : Athena.Handles.Ship_Design.Ship_Design_Class)
       return Non_Negative_Real
    is
+      use Athena.Db;
       use Athena.Handles.Design_Component.Selections;
       Handle : Handles.Design_Component.Design_Component_Handle :=
                  Handles.Design_Component.Empty_Handle;
    begin
       for Component of Select_Where (Ship_Design = Design) loop
-         if Component.Component.Is_Cargo then
+         if Component.Component.Class = Athena.Db.Cargo then
             Handle := Component;
             exit;
          end if;
@@ -145,7 +146,7 @@ package body Athena.Ships is
       else
          return Athena.Empires.Current_Tec_Level
            (Design.Empire, Athena.Technology.Cargo)
-           * (Handle.Power + Handle.Power ** 2 / 20.0);
+           * (Handle.Mass + Handle.Mass ** 2 / 20.0);
       end if;
    end Design_Cargo;
 
@@ -161,7 +162,7 @@ package body Athena.Ships is
       Mass : Non_Negative_Real := 0.0;
    begin
       for Component of Select_Where (Ship_Design = Of_Design) loop
-         Mass := Mass + Component.Power;
+         Mass := Mass + Component.Mass;
       end loop;
       return Mass;
    end Design_Mass;
@@ -205,10 +206,11 @@ package body Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Athena.Handles.Ship_Component.Ship_Component_Class
    is
+      use type Athena.Db.Component_Function_Type;
       use Athena.Handles.Ship_Component.Selections;
    begin
       for Component of Select_Where (Ship = Of_Ship) loop
-         if Component.Component.Is_Drive then
+         if Component.Component.Class = Athena.Db.Drive then
             return Component;
          end if;
       end loop;
@@ -261,7 +263,7 @@ package body Athena.Ships is
       Mass : Non_Negative_Real := 0.0;
    begin
       for Component of Select_Where (Ship = Of_Ship) loop
-         Mass := Mass + Component.Design_Component.Power;
+         Mass := Mass + Component.Design_Component.Mass;
       end loop;
       return Mass + Of_Ship.Material + Of_Ship.Colonists + Of_Ship.Industry;
    end Mass;
@@ -350,7 +352,7 @@ package body Athena.Ships is
    begin
       if Drive.Has_Element then
          return 5.0 * Drive.Condition * Drive.Tec_Level
-           * Drive.Design_Component.Power
+           * Drive.Design_Component.Mass
            / Mass (Of_Ship);
       else
          return 0.0;
@@ -365,12 +367,13 @@ package body Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Non_Negative_Real
    is
+      use type Athena.Db.Component_Function_Type;
       use Athena.Handles.Ship_Component.Selections;
       Handle : Handles.Ship_Component.Ship_Component_Handle :=
                  Handles.Ship_Component.Empty_Handle;
    begin
       for Component of Select_Where (Ship = Of_Ship) loop
-         if Component.Component.Is_Cargo then
+         if Component.Component.Class = Athena.Db.Cargo then
             Handle := Component;
             exit;
          end if;
@@ -380,8 +383,8 @@ package body Athena.Ships is
          return 0.0;
       else
          return Handle.Tec_Level
-           * (Handle.Design_Component.Power
-              + Handle.Design_Component.Power ** 2 / 20.0);
+           * (Handle.Design_Component.Mass
+              + Handle.Design_Component.Mass ** 2 / 20.0);
       end if;
    end Total_Cargo_Space;
 

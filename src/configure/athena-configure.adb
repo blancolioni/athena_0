@@ -306,62 +306,37 @@ package body Athena.Configure is
       begin
          Athena.Handles.Component.Create
            (Tag        => "drive",
-            Is_Drive   => True,
-            Is_Shield  => False,
-            Is_Cargo   => False,
-            Is_Repair  => False,
-            Is_Beam    => False,
-            Is_Missile => False,
+            Class      => Athena.Db.Drive,
             Technology => Tec ("drive"));
 
          Athena.Handles.Component.Create
            (Tag        => "shield",
-            Is_Drive   => False,
-            Is_Shield  => True,
-            Is_Cargo   => False,
-            Is_Repair  => False,
-            Is_Beam    => False,
-            Is_Missile => False,
+            Class      => Athena.Db.Shield,
             Technology => Tec ("shield"));
 
          Athena.Handles.Component.Create
            (Tag        => "cargo",
-            Is_Drive   => False,
-            Is_Shield  => False,
-            Is_Cargo   => True,
-            Is_Repair  => False,
-            Is_Beam    => False,
-            Is_Missile => False,
+            Class      => Athena.Db.Cargo,
             Technology => Tec ("cargo"));
 
          Athena.Handles.Component.Create
            (Tag        => "repair",
-            Is_Drive   => False,
-            Is_Shield  => False,
-            Is_Cargo   => False,
-            Is_Repair  => True,
-            Is_Beam    => False,
-            Is_Missile => False,
+            Class      => Athena.Db.Repair,
             Technology => Tec ("drive"));
 
          Athena.Handles.Component.Create
            (Tag        => "beam",
-            Is_Drive   => False,
-            Is_Shield  => False,
-            Is_Cargo   => False,
-            Is_Repair  => False,
-            Is_Beam    => True,
-            Is_Missile => False,
+            Class      => Athena.Db.Beam,
             Technology => Tec ("weapon"));
 
          Athena.Handles.Component.Create
            (Tag        => "missile",
-            Is_Drive   => False,
-            Is_Shield  => False,
-            Is_Cargo   => False,
-            Is_Repair  => False,
-            Is_Beam    => False,
-            Is_Missile => True,
+            Class      => Athena.Db.Missile,
+            Technology => Tec ("weapon"));
+
+         Athena.Handles.Component.Create
+           (Tag        => "fighter",
+            Class      => Athena.Db.Fighter,
             Technology => Tec ("weapon"));
       end;
 

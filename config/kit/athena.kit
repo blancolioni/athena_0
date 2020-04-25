@@ -147,13 +147,11 @@ record Research_Order : Order is
     Construct : Long_Float;
 end Research_Order;
 
+type Component_Function_Type is 
+  (Drive, Shield, Cargo, Repair, Beam, Missile, Fighter);
+
 record Component : Localised is
-    key Is_Drive   : Boolean;
-    key Is_Shield  : Boolean;
-    key Is_Cargo   : Boolean;
-    key Is_Repair  : Boolean;
-    key Is_Beam    : Boolean;
-    key Is_Missile : Boolean;
+    Class      : Component_Function_Type;
     Technology;
 end Component;
 
@@ -175,8 +173,7 @@ end System_Designs;
 record Design_Component is
     key Ship_Design;
     Component;
-    Power    : Long_Float;
-    Count    : Natural;
+    Mass  : Long_Float;
 end Design_Component;
 
 record Ship : Has_Identifier, Has_Name is

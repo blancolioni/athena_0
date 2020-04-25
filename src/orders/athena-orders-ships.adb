@@ -22,7 +22,7 @@ package body Athena.Orders.Ships is
       Colony : constant Athena.Handles.Colony.Colony_Class :=
                  Athena.Colonies.Get_Colony (Star);
       Mass   : constant Non_Negative_Real :=
-                 Order.Ship_Component.Design_Component.Power;
+                 Order.Ship_Component.Design_Component.Mass;
       New_Tec : constant Non_Negative_Real :=
                   Athena.Empires.Current_Tec_Level
                     (Owner, Order.Ship_Component

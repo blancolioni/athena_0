@@ -1,6 +1,8 @@
 with Athena.Identifiers;
 with Athena.Money;
 
+with Athena.Configure.Designs;
+
 with Athena.Ships.Create;
 
 with Athena.Handles.Colony;
@@ -15,9 +17,7 @@ with Athena.Handles.Technology.Selections;
 with Athena.Handles.Manager.Selections;
 with Athena.Handles.Empire_Manager;
 
-with Athena.Handles.Component.Selections;
 with Athena.Handles.Ship_Design;
-with Athena.Handles.Design_Component;
 
 with Athena.Handles.Fleet;
 
@@ -69,6 +69,11 @@ package body Athena.Empires.Create is
                            (Identifier => Identifiers.Next_Identifier,
                             Name       => Adjective & " Defenders",
                             Empire     => Empire);
+      Attackers     : constant Handles.Fleet.Fleet_Handle :=
+                         Handles.Fleet.Create
+                           (Identifier => Identifiers.Next_Identifier,
+                            Name       => Adjective & " Attackers",
+                            Empire     => Empire);
 
    begin
 
@@ -95,7 +100,7 @@ package body Athena.Empires.Create is
          Scouts     => Scouts,
          Transports => Transports,
          Defenders  => Defenders,
-         Attackers  => Athena.Handles.Fleet.Empty_Handle);
+         Attackers  => Attackers);
 
       for Tec of
         Athena.Handles.Technology.Selections.Select_All
@@ -123,54 +128,19 @@ package body Athena.Empires.Create is
       declare
          use Athena.Handles.Ship_Design;
 
-         function Component
-           (T : String)
-                        return Athena.Handles.Component.Component_Handle;
-
-         ---------------
-         -- Component --
-         ---------------
-
-         function Component
-           (T : String)
-                        return Athena.Handles.Component.Component_Handle
-         is
-            use Athena.Handles.Component.Selections;
-         begin
-            return First_Where (Tag = T);
-         end Component;
-
-         Scout_Id : constant String :=
-                      Athena.Identifiers.Next_Identifier;
-         Scout_Design : constant Ship_Design_Handle :=
-                          Athena.Handles.Ship_Design.Create
-                            (Identifier => Scout_Id,
-                             Empire     => Empire,
-                             Name       => "Scout");
-
-         Transport_Id     : constant String :=
-                              Athena.Identifiers.Next_Identifier;
-         Transport_Design : constant Ship_Design_Handle :=
-                              Athena.Handles.Ship_Design.Create
-                                (Identifier => Transport_Id,
-                                 Empire     => Empire,
-                                 Name       => "Transport");
-
-         Defender_Id     : constant String :=
-                             Athena.Identifiers.Next_Identifier;
-         Defender_Design : constant Ship_Design_Handle :=
-                             Athena.Handles.Ship_Design.Create
-                               (Identifier => Defender_Id,
-                                Empire     => Empire,
-                                Name       => "Defender");
-
+         Scout_Design     : constant Ship_Design_Class :=
+                              Athena.Configure.Designs.Load_Design
+                                (Empire, "scout");
+         Transport_Design : constant Ship_Design_Class :=
+                              Athena.Configure.Designs.Load_Design
+                                (Empire, "transport");
+         Defender_Design  : constant Ship_Design_Class :=
+                              Athena.Configure.Designs.Load_Design
+                                (Empire, "defender");
+         Destroyer_Design : constant Ship_Design_Class :=
+                              Athena.Configure.Designs.Load_Design
+                                (Empire, "destroyer");
       begin
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Scout_Design,
-            Component   => Component ("drive"),
-            Power       => 1.0,
-            Count       => 0);
 
          Athena.Ships.Create.Create_Ship
            (Empire => Empire,
@@ -186,54 +156,12 @@ package body Athena.Empires.Create is
             Design => Scout_Design,
             Name   => "Scout II");
 
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Defender_Design,
-            Component   => Component ("drive"),
-            Power       => 1.0,
-            Count       => 0);
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Defender_Design,
-            Component   => Component ("shield"),
-            Power       => 10.0,
-            Count       => 0);
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Defender_Design,
-            Component   => Component ("beam"),
-            Power       => 10.0,
-            Count       => 4);
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Defender_Design,
-            Component   => Component ("missile"),
-            Power       => 10.0,
-            Count       => 4);
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Defender_Design,
-            Component   => Component ("fighter"),
-            Power       => 10.0,
-            Count       => 4);
-
          Athena.Ships.Create.Create_Ship
            (Empire => Empire,
             Star   => Star,
             Fleet  => Defenders,
             Design => Defender_Design,
             Name   => "Defender I");
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Transport_Design,
-            Component   => Component ("drive"),
-            Power       => 10.0,
-            Count       => 0);
-
-         Athena.Handles.Design_Component.Create
-           (Ship_Design => Transport_Design,
-            Component   => Component ("cargo"),
-            Power       => 10.0,
-            Count       => 0);
 
          Athena.Ships.Create.Create_Ship
            (Empire => Empire,
@@ -242,15 +170,28 @@ package body Athena.Empires.Create is
             Design => Transport_Design,
             Name   => "Transport I");
 
+         Athena.Ships.Create.Create_Ship
+           (Empire => Empire,
+            Star   => Star,
+            Fleet  => Attackers,
+            Design => Destroyer_Design,
+            Name   => "Destroyer I");
+
          Athena.Handles.System_Designs.Create
            (Empire     => Empire,
             Scout      => Scout_Design,
             Transport  => Transport_Design,
             Defender   => Defender_Design,
-            Destroyer  => Athena.Handles.Ship_Design.Empty_Handle,
-            Cruiser    => Athena.Handles.Ship_Design.Empty_Handle,
-            Battleship => Athena.Handles.Ship_Design.Empty_Handle,
-            Carrier    => Athena.Handles.Ship_Design.Empty_Handle);
+            Destroyer  => Destroyer_Design,
+            Cruiser    =>
+              Athena.Configure.Designs.Load_Design
+                (Empire, "cruiser"),
+            Battleship =>
+              Athena.Configure.Designs.Load_Design
+                (Empire, "battleship"),
+            Carrier    =>
+              Athena.Configure.Designs.Load_Design
+                (Empire, "carrier"));
 
       end;
 
