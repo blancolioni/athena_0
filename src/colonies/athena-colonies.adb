@@ -3,6 +3,7 @@ with Athena.Money;
 with Athena.Real_Images;
 
 with Athena.Empires;
+with Athena.Stars;
 
 with Athena.Handles.Colony.Selections;
 
@@ -110,6 +111,36 @@ package body Athena.Colonies is
          & ": "
          & Message);
    end Log;
+
+   --------------------
+   -- Nearest_Colony --
+   --------------------
+
+   function Nearest_Colony
+     (Owned_By : Athena.Handles.Empire.Empire_Class;
+      To_Star  : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Colony.Colony_Class
+   is
+      use Athena.Handles.Colony.Selections;
+      Distance : Non_Negative_Real := Non_Negative_Real'Last;
+      Result   : Athena.Handles.Colony.Colony_Handle :=
+                   Athena.Handles.Colony.Empty_Handle;
+   begin
+      for Colony of Select_Where (Empire = Owned_By) loop
+         declare
+            D : constant Non_Negative_Real :=
+                  Athena.Stars.Distance (Colony.Star, To_Star);
+         begin
+            if D < Distance then
+               Distance := D;
+               Result :=
+                 Athena.Handles.Colony.Get
+                   (Colony.Reference_Colony);
+            end if;
+         end;
+      end loop;
+      return Result;
+   end Nearest_Colony;
 
    ----------------------
    -- Produce_Material --

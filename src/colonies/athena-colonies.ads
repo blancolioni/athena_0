@@ -31,6 +31,11 @@ package Athena.Colonies is
         function (Colony : Athena.Handles.Colony.Colony_Class) return Boolean)
       return Athena.Handles.Colony.Colony_Class;
 
+   function Nearest_Colony
+     (Owned_By : Athena.Handles.Empire.Empire_Class;
+      To_Star  : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Colony.Colony_Class;
+
    function Get_Colony
      (At_Star : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Colony.Colony_Class;

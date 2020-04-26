@@ -233,6 +233,23 @@ package body Athena.Ships is
       end loop;
    end Get_Ships;
 
+   ------------------------
+   -- Iterate_Components --
+   ------------------------
+
+   procedure Iterate_Components
+     (On_Ship : Athena.Handles.Ship.Ship_Class;
+      Process : not null access
+        procedure
+          (Component : Athena.Handles.Ship_Component.Ship_Component_Class))
+   is
+      use Athena.Handles.Ship_Component.Selections;
+   begin
+      for Component of Select_Where (Ship = On_Ship) loop
+         Process (Component);
+      end loop;
+   end Iterate_Components;
+
    ----------
    -- Load --
    ----------
