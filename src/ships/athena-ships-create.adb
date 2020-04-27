@@ -29,6 +29,7 @@ package body Athena.Ships.Create is
                     (Identifier  => Ship_Id,
                      Empire      => Empire,
                      Star        => Star,
+                     Ship_Design => Design,
                      Fleet       => Fleet,
                      Name        => Name,
                      Destination => Destination,
