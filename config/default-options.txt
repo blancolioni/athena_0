@@ -1,7 +1,9 @@
 language = en
-randomise = no
-galaxy-radius-x = 50
-galaxy-radius-y = 50
-system-count = 100
+randomise = yes
+galaxy-radius-x = 100
+galaxy-radius-y = 100
+star-count = 800
 create = no
 log-folder = log
+auto-update = yes
+update-interval = 60
