@@ -109,7 +109,7 @@ package body Athena.Updates is
       New_Debt : constant Money_Type :=
                    Empire.Debt - Repay;
       Interest : constant Money_Type :=
-                   Adjust (New_Debt, 1.1);
+                   Adjust (New_Debt, 0.05);
    begin
       if Repay > Zero then
          Athena.Logging.Log
