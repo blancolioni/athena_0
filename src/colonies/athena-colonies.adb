@@ -17,6 +17,36 @@ package body Athena.Colonies is
       Message : String);
 
    -----------------
+   -- Best_Colony --
+   -----------------
+
+   function Best_Colony
+     (Owned_By : Athena.Handles.Empire.Empire_Class;
+      Score    : not null access
+        function (Colony : Athena.Handles.Colony.Colony_Class) return Real)
+      return Athena.Handles.Colony.Colony_Class
+   is
+      use Athena.Handles.Colony.Selections;
+      Best_Score : Real := Real'First;
+      Result     : Athena.Handles.Colony.Colony_Handle :=
+                     Athena.Handles.Colony.Empty_Handle;
+   begin
+      for Colony of Select_Where (Empire = Owned_By) loop
+         declare
+            This_Score : constant Real := Score (Colony);
+         begin
+            if This_Score > Best_Score then
+               Best_Score := This_Score;
+               Result :=
+                 Athena.Handles.Colony.Get
+                   (Colony.Reference_Colony);
+            end if;
+         end;
+      end loop;
+      return Result;
+   end Best_Colony;
+
+   -----------------
    -- Can_Provide --
    -----------------
 
