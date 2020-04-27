@@ -2,7 +2,6 @@ with WL.String_Maps;
 
 with Athena.Logging;
 
-with Athena.Handles.Empire;
 with Athena.Handles.Empire_Manager.Selections;
 
 with Athena.Managers.Colonization;
@@ -45,6 +44,21 @@ package body Athena.Managers is
       Manager_Orders.Insert
         ("upgrade", Athena.Managers.Upgrade.Create_Orders'Access);
    end Load_Managers;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log
+     (Manager_Tag : String;
+      Empire      : Athena.Handles.Empire.Empire_Class;
+      Message     : String)
+   is
+   begin
+      Athena.Logging.Log
+        (Empire.Name & "/" & Manager_Tag & ": "
+         & Message);
+   end Log;
 
    ------------------
    -- Run_Managers --
