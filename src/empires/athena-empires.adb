@@ -54,6 +54,32 @@ package body Athena.Empires is
         .Done;
    end Add_Investment;
 
+   ------------------
+   -- Attack_Fleet --
+   ------------------
+
+   function Attack_Fleet
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Fleet.Fleet_Class
+   is
+      use Athena.Handles.System_Fleets.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Attackers;
+   end Attack_Fleet;
+
+   -----------------------
+   -- Battleship_Design --
+   -----------------------
+
+   function Battleship_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class
+   is
+      use Athena.Handles.System_Designs.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Battleship;
+   end Battleship_Design;
+
    -------------
    -- Capital --
    -------------
@@ -79,6 +105,32 @@ package body Athena.Empires is
    begin
       return First_Where (Star = Capital (Of_Empire));
    end Capital;
+
+   --------------------
+   -- Carrier_Design --
+   --------------------
+
+   function Carrier_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class
+   is
+      use Athena.Handles.System_Designs.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Carrier;
+   end Carrier_Design;
+
+   --------------------
+   -- Cruiser_Design --
+   --------------------
+
+   function Cruiser_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class
+   is
+      use Athena.Handles.System_Designs.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Cruiser;
+   end Cruiser_Design;
 
    -----------------------
    -- Current_Tec_Level --
@@ -121,6 +173,19 @@ package body Athena.Empires is
    begin
       return First_Where (Empire = For_Empire).Defenders;
    end Defender_Fleet;
+
+   ----------------------
+   -- Destroyer_Design --
+   ----------------------
+
+   function Destroyer_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class
+   is
+      use Athena.Handles.System_Designs.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Destroyer;
+   end Destroyer_Design;
 
    ----------
    -- Earn --

@@ -41,6 +41,10 @@ package Athena.Empires is
      (For_Empire : Athena.Handles.Empire.Empire_Class)
       return Athena.Handles.Fleet.Fleet_Class;
 
+   function Attack_Fleet
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Fleet.Fleet_Class;
+
    function Scout_Design
      (For_Empire : Athena.Handles.Empire.Empire_Class)
       return Athena.Handles.Ship_Design.Ship_Design_Class;
@@ -50,6 +54,22 @@ package Athena.Empires is
       return Athena.Handles.Ship_Design.Ship_Design_Class;
 
    function Defender_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class;
+
+   function Destroyer_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class;
+
+   function Cruiser_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class;
+
+   function Battleship_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class;
+
+   function Carrier_Design
      (For_Empire : Athena.Handles.Empire.Empire_Class)
       return Athena.Handles.Ship_Design.Ship_Design_Class;
 

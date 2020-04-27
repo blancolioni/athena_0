@@ -4,6 +4,7 @@ with Athena.Logging;
 
 with Athena.Handles.Empire_Manager.Selections;
 
+with Athena.Managers.Attack;
 with Athena.Managers.Colonization;
 with Athena.Managers.Defend;
 with Athena.Managers.Development;
@@ -29,6 +30,8 @@ package body Athena.Managers is
 
    procedure Load_Managers is
    begin
+      Manager_Orders.Insert
+        ("attack", Athena.Managers.Attack.Create_Orders'Access);
       Manager_Orders.Insert
         ("colonize", Athena.Managers.Colonization.Create_Orders'Access);
       Manager_Orders.Insert
