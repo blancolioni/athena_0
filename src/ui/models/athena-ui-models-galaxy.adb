@@ -159,9 +159,14 @@ package body Athena.UI.Models.Galaxy is
                   else
                      Model.Set_Color (To_Nazar_Color (Empire_Ship.Empire.Rgb));
                   end if;
-                  Model.Circle (Radius);
-                  Model.Render;
-                  Radius := Radius + 4.0;
+
+                  for I in 1 .. Empire_Ship.Count loop
+                     Model.Circle (Radius);
+                     Model.Render;
+                     Radius := Radius + 2.0;
+                  end loop;
+
+                  Radius := Radius + 2.0;
                end loop;
                Model.Restore_State;
             end;
