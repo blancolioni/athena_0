@@ -3,11 +3,13 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Athena.Logging;
 with Athena.Real_Images;
 
+with Athena.Colonies;
 with Athena.Empires;
 with Athena.Knowledge.Stars;
 with Athena.Orders;
 with Athena.Stars;
 
+with Athena.Handles.Colony;
 with Athena.Handles.Star;
 
 with Athena.Db;
@@ -106,11 +108,22 @@ package body Athena.Managers.Colonization is
            ("colonizing: " & Targets.First_Element.Star.Name
             & " score " & Image (Targets.First_Element.Score));
 
-         Athena.Orders.Move_Cargo
-           (Athena.Db.Colonists, 10.0,
-            Athena.Empires.Capital (For_Empire),
-            Targets.First_Element.Star,
-            Priority);
+         declare
+            function Pop (Of_Colony : Athena.Handles.Colony.Colony_Class)
+                          return Real
+            is (Of_Colony.Pop);
+
+            From : constant Athena.Handles.Colony.Colony_Class :=
+                     Athena.Colonies.Best_Colony
+                       (For_Empire, Pop'Access);
+         begin
+            Athena.Orders.Move_Cargo
+              (Athena.Db.Colonists, 10.0,
+               From,
+               Targets.First_Element.Star,
+               Priority);
+         end;
+
          Knowledge.Set_Colonizing
            (Targets.First_Element.Star, True);
       end if;
