@@ -234,52 +234,58 @@ package body Athena.UI.Models.Galaxy is
       Voronoi     : Athena.Voronoi_Diagrams.Voronoi_Diagram;
    begin
 
-      Model.Stars.Clear;
+      if Model.Stars.Is_Empty then
+         for Star of
+           Athena.Handles.Star.Selections.Select_All
+         loop
+            declare
+               Color : constant Nazar.Colors.Nazar_Color :=
+                         (1.0, 1.0, 1.0, 1.0);
+               Rec   : constant Star_Record := Star_Record'
+                 (Handle   => Star,
+                  Color    => Color,
+                  X        => Nazar.Nazar_Float (Star.X),
+                  Y        => Nazar.Nazar_Float (Star.Y),
+                  Ships    => Orbiting_Ships (Star),
+                  Boundary => <>);
+            begin
+               Model.Stars.Append (Rec);
+               Voronoi.Add_Point (Star.X, Star.Y);
+               if False then
+                  Left := Real'Min (Left, Star.X);
+                  Top  := Real'Min (Top, Star.Y);
+                  Right := Real'Max (Right, Star.X);
+                  Bottom  := Real'Max (Bottom, Star.Y);
+               end if;
+               if Index_Map.Contains (Star.Name) then
+                  raise Constraint_Error with
+                    "multiple systems called " & Star.Name;
+               end if;
 
-      for Star of
-        Athena.Handles.Star.Selections.Select_All
-      loop
-         declare
-            Color : constant Nazar.Colors.Nazar_Color :=
-                      (1.0, 1.0, 1.0, 1.0);
-            Rec   : constant Star_Record := Star_Record'
-              (Handle   => Star,
-               Color    => Color,
-               X        => Nazar.Nazar_Float (Star.X),
-               Y        => Nazar.Nazar_Float (Star.Y),
-               Ships    => Orbiting_Ships (Star),
-               Boundary => <>);
-         begin
-            Model.Stars.Append (Rec);
-            Voronoi.Add_Point (Star.X, Star.Y);
-            if False then
-               Left := Real'Min (Left, Star.X);
-               Top  := Real'Min (Top, Star.Y);
-               Right := Real'Max (Right, Star.X);
-               Bottom  := Real'Max (Bottom, Star.Y);
-            end if;
-            if Index_Map.Contains (Star.Name) then
-               raise Constraint_Error with
-                 "multiple systems called " & Star.Name;
-            end if;
+               Index_Map.Insert (Star.Name, Model.Stars.Last_Index);
+            end;
+         end loop;
 
-            Index_Map.Insert (Star.Name, Model.Stars.Last_Index);
-         end;
-      end loop;
+         Voronoi.Generate;
 
-      Voronoi.Generate;
+         for I in 1 .. Voronoi.Polygon_Count loop
+            declare
+               Pts : Point_Vectors.Vector;
+            begin
+               for J in 1 .. Voronoi.Vertex_Count (I) loop
+                  Pts.Append ((Voronoi.Vertex_X (I, J),
+                              Voronoi.Vertex_Y (I, J)));
+               end loop;
+               Model.Stars (I).Boundary := Pts;
+            end;
+         end loop;
 
-      for I in 1 .. Voronoi.Polygon_Count loop
-         declare
-            Pts : Point_Vectors.Vector;
-         begin
-            for J in 1 .. Voronoi.Vertex_Count (I) loop
-               Pts.Append ((Voronoi.Vertex_X (I, J),
-                           Voronoi.Vertex_Y (I, J)));
-            end loop;
-            Model.Stars (I).Boundary := Pts;
-         end;
-      end loop;
+      else
+
+         for Rec of Model.Stars loop
+            Rec.Ships := Orbiting_Ships (Rec.Handle);
+         end loop;
+      end if;
 
       Model.Journeys.Clear;
 
