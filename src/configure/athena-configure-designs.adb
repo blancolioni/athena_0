@@ -1,3 +1,5 @@
+with Ada.Characters.Handling;
+
 with Tropos.Reader;
 
 with Athena.Identifiers;
@@ -8,6 +10,8 @@ with Athena.Handles.Design_Component;
 with Athena.Paths;
 
 package body Athena.Configure.Designs is
+
+   function To_Name (Tag : String) return String;
 
    -----------------
    -- Load_Design --
@@ -28,7 +32,7 @@ package body Athena.Configure.Designs is
       Design : constant Athena.Handles.Ship_Design.Ship_Design_Handle :=
                  Athena.Handles.Ship_Design.Create
                    (Identifier => Id,
-                    Name       => Config.Get ("name", Name),
+                    Name       => To_Name (Name),
                     Empire     => Empire);
 
       function Get_Component
@@ -74,5 +78,24 @@ package body Athena.Configure.Designs is
       return Design;
 
    end Load_Design;
+
+   -------------
+   -- To_Name --
+   -------------
+
+   function To_Name (Tag : String) return String is
+      Capitalize : Boolean := True;
+   begin
+      return Name : String := Tag do
+         for Ch of Name loop
+            if Capitalize then
+               Ch := Ada.Characters.Handling.To_Upper (Ch);
+               Capitalize := False;
+            elsif Ch = ' ' or else Ch = '_' then
+               Capitalize := True;
+            end if;
+         end loop;
+      end return;
+   end To_Name;
 
 end Athena.Configure.Designs;
