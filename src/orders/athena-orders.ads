@@ -1,6 +1,7 @@
 with Athena.Handles.Colony;
 with Athena.Handles.Empire;
 with Athena.Handles.Fleet;
+with Athena.Handles.Manager;
 with Athena.Handles.Ship;
 with Athena.Handles.Ship_Design;
 with Athena.Handles.Star;
@@ -33,6 +34,7 @@ package Athena.Orders is
      (Empire   : Athena.Handles.Empire.Empire_Class;
       Design   : Athena.Handles.Ship_Design.Ship_Design_Class;
       Fleet    : Athena.Handles.Fleet.Fleet_Class;
+      Manager  : Athena.Handles.Manager.Manager_Class;
       Send_To  : Athena.Handles.Star.Star_Class;
       Count    : Positive;
       Priority : Positive);

@@ -2,7 +2,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with Athena.Handles.Empire;
 with Athena.Handles.Fleet;
-with Athena.Handles.Ship;
+with Athena.Handles.Manager;
+with Athena.Handles.Ship.Selections;
 with Athena.Handles.Ship_Component;
 with Athena.Handles.Ship_Design;
 with Athena.Handles.Star;
@@ -79,14 +80,34 @@ package Athena.Ships is
      (Process : not null access
         procedure (Ship : Athena.Handles.Ship.Ship_Class));
 
+   procedure Upgrade_Component
+     (Component     : Athena.Handles.Ship_Component.Ship_Component_Class;
+      New_Tec_Level : Non_Negative_Real);
+
    procedure For_All_Ships
      (Owned_By : Athena.Handles.Empire.Empire_Class;
       Process  : not null access
         procedure (Ship : Athena.Handles.Ship.Ship_Class));
 
+   function Select_Managed_Ships
+     (Managed_By : Athena.Handles.Manager.Manager_Class)
+      return Athena.Handles.Ship.Selections.Selection;
+
    function Name_Ship
      (Owner     : Athena.Handles.Empire.Empire_Class;
       Base_Name : String)
       return String;
+
+   function Name_Fleet
+     (Owner     : Athena.Handles.Empire.Empire_Class;
+      Base_Name : String)
+      return String;
+
+   procedure Load_Ships;
+
+private
+
+   procedure Add_Ship (Added_Ship : Athena.Handles.Ship.Ship_Class);
+--     procedure Update_Ship (Updated_Ship : Athena.Handles.Ship.Ship_Class);
 
 end Athena.Ships;

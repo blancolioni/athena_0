@@ -3,6 +3,7 @@ with WL.String_Maps;
 with Athena.Logging;
 
 with Athena.Handles.Empire_Manager.Selections;
+with Athena.Handles.Manager;
 
 with Athena.Managers.Attack;
 with Athena.Managers.Colonization;
@@ -17,7 +18,7 @@ package body Athena.Managers is
 
    type Create_Orders_Handler is access
      procedure (Empire   : Athena.Handles.Empire.Empire_Class;
-                Priority : Positive);
+                Manager  : Athena.Handles.Manager.Manager_Class);
 
    package Manager_Orders_Maps is
      new WL.String_Maps (Create_Orders_Handler);
@@ -76,7 +77,7 @@ package body Athena.Managers is
             Athena.Logging.Log
               ("running manager: " & EM.Empire.Name & "/" & EM.Manager.Tag);
             Manager_Orders.Element (EM.Manager.Tag)
-              (EM.Empire, EM.Manager.Priority);
+              (EM.Empire, EM.Manager);
          else
             Athena.Logging.Log
               ("no handler for manager: " & EM.Manager.Tag);

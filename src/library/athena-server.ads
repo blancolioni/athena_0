@@ -11,4 +11,7 @@ package Athena.Server is
       Capital   : String;
       Color     : String);
 
+   procedure Load;
+   procedure Save;
+
 end Athena.Server;

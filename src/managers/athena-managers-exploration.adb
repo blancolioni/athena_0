@@ -21,7 +21,7 @@ package body Athena.Managers.Exploration is
 
    procedure Create_Orders
      (For_Empire : Athena.Handles.Empire.Empire_Class;
-      Priority   : Positive)
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
       Max_Range : constant Non_Negative_Real :=
                     Athena.Empires.Current_Tec_Level
@@ -37,7 +37,9 @@ package body Athena.Managers.Exploration is
          Nearest : Athena.Handles.Colony.Colony_Class;
          Stop    : out Boolean);
 
-      procedure Upgrade_Scouts (Scouts : in out Athena.Ships.Ship_Lists.List);
+      function Check_Upgrade
+        (Scout : Athena.Handles.Ship.Ship_Class)
+         return Boolean;
 
       ------------------------
       -- Check_Scout_Target --
@@ -90,18 +92,13 @@ package body Athena.Managers.Exploration is
 
       end Check_Scout_Target;
 
-      --------------------
-      -- Upgrade_Scouts --
-      --------------------
-
-      procedure Upgrade_Scouts
-        (Scouts : in out Athena.Ships.Ship_Lists.List)
+      function Check_Upgrade
+        (Scout : Athena.Handles.Ship.Ship_Class)
+         return Boolean
       is
-         Changed  : Boolean := False;
-         New_List : Athena.Ships.Ship_Lists.List;
 
          function Needs_Upgrade
-           (Ship : Athena.Handles.Ship.Ship_Handle)
+           (Ship : Athena.Handles.Ship.Ship_Class)
             return Boolean;
 
          -------------------
@@ -109,7 +106,7 @@ package body Athena.Managers.Exploration is
          -------------------
 
          function Needs_Upgrade
-           (Ship : Athena.Handles.Ship.Ship_Handle)
+           (Ship : Athena.Handles.Ship.Ship_Class)
             return Boolean
          is
             Result : Boolean := False;
@@ -140,50 +137,53 @@ package body Athena.Managers.Exploration is
          end Needs_Upgrade;
 
       begin
-         for Ship of Scouts loop
-            if Ship.First_Order = 0
-              and then not Ship.Destination.Has_Element
-              and then Needs_Upgrade (Ship)
-            then
-               Changed := True;
-               if not Ship.Star.Owner.Has_Element
-                 or else Ship.Star.Owner.Identifier /= For_Empire.Identifier
-               then
-                  declare
-                     Colony : constant Athena.Handles.Colony.Colony_Class :=
-                                Athena.Colonies.Nearest_Colony
-                                  (Ship.Empire, Ship.Star);
-                  begin
-                     Athena.Logging.Log
-                       (For_Empire.Name
-                        & "/exploration: sending "
-                        & Ship.Name
-                        & " to "
-                        & Colony.Star.Name
-                        & " for an upgrade");
-                     Athena.Orders.Set_Destination
-                       (Ship        => Ship,
-                        Destination => Colony.Star,
-                        Priority    => Priority);
-                  end;
-               end if;
-            else
-               New_List.Append (Ship);
-            end if;
-         end loop;
 
-         if Changed then
-            Scouts := New_List;
+         if Scout.First_Order = 0
+           and then not Scout.Destination.Has_Element
+           and then Needs_Upgrade (Scout)
+         then
+            if not Scout.Star.Owner.Has_Element
+              or else Scout.Star.Owner.Identifier /= For_Empire.Identifier
+            then
+               declare
+                  Colony : constant Athena.Handles.Colony.Colony_Class :=
+                             Athena.Colonies.Nearest_Colony
+                               (Scout.Empire, Scout.Star);
+               begin
+                  Athena.Logging.Log
+                    (For_Empire.Name
+                     & "/exploration: sending "
+                     & Scout.Name
+                     & " to "
+                     & Colony.Star.Name
+                     & " for an upgrade");
+                  Athena.Orders.Set_Destination
+                    (Ship        => Scout,
+                     Destination => Colony.Star,
+                     Priority    => Manager.Priority);
+               end;
+            end if;
+
+            return True;
+
+         else
+            return False;
          end if;
 
-      end Upgrade_Scouts;
+      end Check_Upgrade;
 
    begin
       Knowledge.Load (For_Empire);
-      Athena.Ships.Get_Ships (Athena.Empires.Scout_Fleet (For_Empire),
-                              Scout_Ships);
 
-      Upgrade_Scouts (Scout_Ships);
+      for Ship of
+        Athena.Ships.Select_Managed_Ships
+          (Athena.Empires.Exploration_Manager (For_Empire))
+      loop
+         if not Check_Upgrade (Ship) then
+            Scout_Ships.Append
+              (Athena.Handles.Ship.Get (Ship.Reference_Ship));
+         end if;
+      end loop;
 
       Knowledge.Iterate_Neighbours
         (Max_Range, Check_Scout_Target'Access);

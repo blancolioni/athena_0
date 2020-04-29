@@ -63,18 +63,9 @@ record Manager : Localised is
     Priority : Positive;
 end Manager;
 
-record System_Fleets is
-    unique key Empire;
-    Scouts     : Fleet;
-    Transports : Fleet;
-    Defenders  : Fleet;
-    Attackers  : Fleet;
-end System_Fleets;
-
 record Empire_Manager is
     key Empire;
     Manager;
-    Fleet;
     Enabled : Boolean;
 end Empire_Manager;
 
@@ -108,7 +99,7 @@ record Star_Knowledge is
     unique key Star_Knowledge with Star, Empire;
 end Star_Knowledge;
     
-record Colony is
+record Colony : Has_Identifier is
     unique key Star;
     key Empire;
     Construct    : Long_Float;
@@ -180,6 +171,7 @@ record Ship : Has_Identifier, Has_Name is
     key Empire;
     key Star;
     key Fleet;
+    key Manager;
     key Destination : Star;
     Ship_Design;
     First_Order : Natural;
@@ -193,7 +185,7 @@ record Ship : Has_Identifier, Has_Name is
     key Ship_Destination with Empire, Destination;
 end Ship;
 
-record Ship_Component is
+record Ship_Component : Has_Identifier is
     key Ship;
     Component;
     Design_Component;
@@ -223,6 +215,7 @@ end Repair_Order;
 
 record Ship_Build_Order : Order is
     Ship_Design;
+    Manager;
     Fleet;
     Send_To      : Star;
 end Ship_Build_Order;

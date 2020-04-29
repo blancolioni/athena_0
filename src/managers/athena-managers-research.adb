@@ -14,7 +14,7 @@ package body Athena.Managers.Research is
 
    procedure Create_Orders
      (For_Empire : Athena.Handles.Empire.Empire_Class;
-      Priority   : Positive)
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
       use Athena.Money;
 
@@ -49,7 +49,8 @@ package body Athena.Managers.Research is
                               Total_Investment / 2.0;
       begin
          Athena.Orders.Research_Technology
-           (For_Empire, Athena.Technology.Drive, Drive_Investment, Priority);
+           (For_Empire, Athena.Technology.Drive,
+            Drive_Investment, Manager.Priority);
          Total_Investment := Total_Investment - Drive_Investment;
       end;
 
@@ -58,7 +59,8 @@ package body Athena.Managers.Research is
                                Total_Investment / 2.0;
       begin
          Athena.Orders.Research_Technology
-           (For_Empire, Athena.Technology.Weapon, Weapon_Investment, Priority);
+           (For_Empire, Athena.Technology.Weapon, Weapon_Investment,
+            Manager.Priority);
          Total_Investment := Total_Investment - Weapon_Investment;
       end;
 
@@ -67,12 +69,14 @@ package body Athena.Managers.Research is
                               Total_Investment / 1.5;
       begin
          Athena.Orders.Research_Technology
-           (For_Empire, Athena.Technology.Shield, Shield_Investment, Priority);
+           (For_Empire, Athena.Technology.Shield, Shield_Investment,
+            Manager.Priority);
          Total_Investment := Total_Investment - Shield_Investment;
       end;
 
       Athena.Orders.Research_Technology
-        (For_Empire, Athena.Technology.Cargo, Total_Investment, Priority);
+        (For_Empire, Athena.Technology.Cargo, Total_Investment,
+         Manager.Priority);
 
    end Create_Orders;
 

@@ -1,10 +1,11 @@
 with Athena.Colonies;
 with Athena.Empires;
 with Athena.Orders;
+with Athena.Ships;
 
 with Athena.Handles.Colony;
+with Athena.Handles.Fleet;
 with Athena.Handles.Ship_Design;
-with Athena.Handles.Ship.Selections;
 
 package body Athena.Managers.Attack is
 
@@ -14,7 +15,7 @@ package body Athena.Managers.Attack is
 
    procedure Create_Orders
      (For_Empire : Athena.Handles.Empire.Empire_Class;
-      Priority   : Positive)
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
       Total_Industry : Non_Negative_Real := 0.0;
 
@@ -44,7 +45,6 @@ package body Athena.Managers.Attack is
         (Design            : Athena.Handles.Ship_Design.Ship_Design_Class;
          Industry_Per_Ship : Positive)
       is
-         use Athena.Handles.Ship.Selections;
          Required  : constant Natural :=
                        Natural
                          (Real'Truncation
@@ -52,8 +52,8 @@ package body Athena.Managers.Attack is
          Available : Natural := 0;
       begin
 
-         for Ship of
-           Select_Where (Fleet = Athena.Empires.Attack_Fleet (For_Empire))
+         for Ship of Athena.Ships.Select_Managed_Ships
+           (Athena.Empires.Attack_Manager (For_Empire))
          loop
             if Ship.Ship_Design.Identifier = Design.Identifier then
                Available := Available + 1;
@@ -69,10 +69,11 @@ package body Athena.Managers.Attack is
             Athena.Orders.Build_Ships
               (Empire   => For_Empire,
                Design   => Design,
-               Fleet    => Athena.Empires.Attack_Fleet (For_Empire),
+               Fleet    => Athena.Handles.Fleet.Empty_Handle,
+               Manager  => Manager,
                Send_To  => Athena.Empires.Capital (For_Empire),
                Count    => Required - Available,
-               Priority => Priority);
+               Priority => Manager.Priority);
          end if;
       end Check_Ships;
 

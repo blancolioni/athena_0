@@ -4,8 +4,8 @@ with Athena.Real_Images;
 
 with Athena.Handles.Colony.Selections;
 with Athena.Handles.Empire_Capital.Selections;
+with Athena.Handles.Empire_Manager.Selections;
 with Athena.Handles.System_Designs.Selections;
-with Athena.Handles.System_Fleets.Selections;
 
 with Athena.Db.Empire_Tec;
 
@@ -13,6 +13,11 @@ package body Athena.Empires is
 
    function Image (X : Real) return String
                    renames Athena.Real_Images.Approximate_Image;
+
+   function Get_Manager
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      Tag        : String)
+      return Athena.Handles.Manager.Manager_Class;
 
    --------------------
    -- Add_Investment --
@@ -54,18 +59,17 @@ package body Athena.Empires is
         .Done;
    end Add_Investment;
 
-   ------------------
-   -- Attack_Fleet --
-   ------------------
+   --------------------
+   -- Attack_Manager --
+   --------------------
 
-   function Attack_Fleet
+   function Attack_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class
+      return Athena.Handles.Manager.Manager_Class
    is
-      use Athena.Handles.System_Fleets.Selections;
    begin
-      return First_Where (Empire = For_Empire).Attackers;
-   end Attack_Fleet;
+      return Get_Manager (For_Empire, "attack");
+   end Attack_Manager;
 
    -----------------------
    -- Battleship_Design --
@@ -161,18 +165,17 @@ package body Athena.Empires is
       return First_Where (Empire = For_Empire).Defender;
    end Defender_Design;
 
-   --------------------
-   -- Defender_Fleet --
-   --------------------
+   ---------------------
+   -- Defense_Manager --
+   ---------------------
 
-   function Defender_Fleet
+   function Defense_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class
+      return Athena.Handles.Manager.Manager_Class
    is
-      use Athena.Handles.System_Fleets.Selections;
    begin
-      return First_Where (Empire = For_Empire).Defenders;
-   end Defender_Fleet;
+      return Get_Manager (For_Empire, "defend");
+   end Defense_Manager;
 
    ----------------------
    -- Destroyer_Design --
@@ -209,6 +212,37 @@ package body Athena.Empires is
         .Set_Cash (New_Cash)
         .Done;
    end Earn;
+
+   -------------------------
+   -- Exploration_Manager --
+   -------------------------
+
+   function Exploration_Manager
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Manager.Manager_Class
+   is
+   begin
+      return Get_Manager (For_Empire, "explore");
+   end Exploration_Manager;
+
+   -----------------
+   -- Get_Manager --
+   -----------------
+
+   function Get_Manager
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      Tag        : String)
+      return Athena.Handles.Manager.Manager_Class
+   is
+      use Athena.Handles.Empire_Manager.Selections;
+   begin
+      for Manager of Select_Where (Empire = For_Empire) loop
+         if Manager.Manager.Tag = Tag then
+            return Manager.Manager;
+         end if;
+      end loop;
+      raise Constraint_Error with "no such manager: " & Tag;
+   end Get_Manager;
 
    ---------
    -- Pay --
@@ -255,19 +289,6 @@ package body Athena.Empires is
       return First_Where (Empire = For_Empire).Scout;
    end Scout_Design;
 
-   -----------------
-   -- Scout_Fleet --
-   -----------------
-
-   function Scout_Fleet
-     (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class
-   is
-      use Athena.Handles.System_Fleets.Selections;
-   begin
-      return First_Where (Empire = For_Empire).Scouts;
-   end Scout_Fleet;
-
    ----------------------
    -- Transport_Design --
    ----------------------
@@ -285,13 +306,12 @@ package body Athena.Empires is
    -- Transport_Fleet --
    ---------------------
 
-   function Transport_Fleet
+   function Transport_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class
+      return Athena.Handles.Manager.Manager_Class
    is
-      use Athena.Handles.System_Fleets.Selections;
    begin
-      return First_Where (Empire = For_Empire).Transports;
-   end Transport_Fleet;
+      return Get_Manager (For_Empire, "transport");
+   end Transport_Manager;
 
 end Athena.Empires;

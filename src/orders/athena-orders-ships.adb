@@ -2,6 +2,7 @@ with Athena.Real_Images;
 
 with Athena.Colonies;
 with Athena.Empires;
+with Athena.Ships;
 
 package body Athena.Orders.Ships is
 
@@ -41,9 +42,8 @@ package body Athena.Orders.Ships is
                & " on " & Owner.Name & " ship "
                & Order.Ship_Component.Ship.Name
                & " to " & Image (New_Tec));
-            Order.Ship_Component.Update_Ship_Component
-              .Set_Tec_Level (New_Tec)
-              .Done;
+            Athena.Ships.Upgrade_Component
+              (Order.Ship_Component, New_Tec);
          end if;
       end if;
    end Apply_Upgrade_Order;

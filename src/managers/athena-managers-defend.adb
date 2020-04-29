@@ -1,10 +1,12 @@
 with Athena.Colonies;
 with Athena.Empires;
+with Athena.Ships;
 
 with Athena.Orders;
 
 with Athena.Handles.Colony;
-with Athena.Handles.Ship.Selections;
+with Athena.Handles.Fleet;
+with Athena.Handles.Ship;
 
 package body Athena.Managers.Defend is
 
@@ -13,7 +15,8 @@ package body Athena.Managers.Defend is
    -------------------
 
    procedure Create_Orders
-     (For_Empire : Athena.Handles.Empire.Empire_Class; Priority : Positive)
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
 
       procedure Check_Defenders (Colony : Athena.Handles.Colony.Colony_Class);
@@ -25,7 +28,6 @@ package body Athena.Managers.Defend is
       procedure Check_Defenders
         (Colony : Athena.Handles.Colony.Colony_Class)
       is
-         use Athena.Handles.Ship.Selections;
          Required  : constant Positive :=
                        Natural'Max
                          (Natural (Colony.Industry / 1000.0),
@@ -34,7 +36,8 @@ package body Athena.Managers.Defend is
          Available : Natural := 0;
       begin
          for Ship of
-           Select_Where (Fleet = Athena.Empires.Defender_Fleet (For_Empire))
+           Athena.Ships.Select_Managed_Ships
+             (Athena.Empires.Defense_Manager (For_Empire))
          loop
             if (Ship.Star.Identifier = Colony.Star.Identifier
                 and then not Ship.Destination.Has_Element)
@@ -46,7 +49,7 @@ package body Athena.Managers.Defend is
 
          if Available < Required then
             Log ("defend", For_Empire,
-                 "colony on " & Colony.Star.Name
+                 "colony on "
                  & Colony.Star.Name
                  & ": assigned defenders" & Available'Image
                  & "; required" & Required'Image);
@@ -54,10 +57,11 @@ package body Athena.Managers.Defend is
             Athena.Orders.Build_Ships
               (Empire   => For_Empire,
                Design   => Athena.Empires.Defender_Design (For_Empire),
-               Fleet    => Athena.Empires.Defender_Fleet (For_Empire),
+               Fleet    => Athena.Handles.Fleet.Empty_Handle,
+               Manager  => Manager,
                Send_To  => Colony.Star,
                Count    => Required - Available,
-               Priority => Priority);
+               Priority => Manager.Priority);
          end if;
 
       end Check_Defenders;

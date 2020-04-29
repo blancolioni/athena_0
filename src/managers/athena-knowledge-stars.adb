@@ -1,8 +1,9 @@
 with Athena.Logging;
 with Athena.Turns;
 
-with Athena.Handles.Colony.Selections;
-with Athena.Handles.Star_Distance.Selections;
+with Athena.Colonies;
+with Athena.Stars;
+
 with Athena.Handles.Star_Knowledge;
 
 with Athena.Db.Star_Knowledge;
@@ -123,17 +124,24 @@ package body Athena.Knowledge.Stars is
 
       Athena.Logging.Log
         (For_Empire.Name
-         & "/knowledge: loading");
+         & "/knowledge: scanning colonies");
 
       declare
-         use Athena.Handles.Colony.Selections;
-      begin
-         for Colony of Select_Where (Empire = For_Empire) loop
-            Athena.Logging.Log
-              (For_Empire.Name & "/knowledge: scanning colony "
-               & Colony.Star.Name);
+         procedure Update (Colony : Athena.Handles.Colony.Colony_Class);
+
+         ------------
+         -- Update --
+         ------------
+
+         procedure Update (Colony : Athena.Handles.Colony.Colony_Class) is
+         begin
             Update_Neighbours (Knowledge, Colony);
-         end loop;
+         end Update;
+
+      begin
+         Athena.Colonies.For_All_Colonies
+           (Owned_By => For_Empire,
+            Process  => Update'Access);
       end;
 
       Athena.Logging.Log
@@ -233,41 +241,53 @@ package body Athena.Knowledge.Stars is
      (Knowledge : in out Star_Knowledge'Class;
       Colony    : Athena.Handles.Colony.Colony_Class)
    is
-      use Athena.Handles.Star_Distance.Selections;
-   begin
-      for SD of Select_Where (From = Colony.Star) loop
-         if not SD.To.Owner.Has_Element
-           or else SD.To.Owner.Name /= Knowledge.Empire.Name
-         then
+      Handle : constant Athena.Handles.Colony.Colony_Handle :=
+                 Athena.Handles.Colony.Get (Colony.Reference_Colony);
+
+      procedure Update
+        (Neighbour : Athena.Handles.Star.Star_Class;
+         Distance  : Non_Negative_Real);
+
+      ------------
+      -- Update --
+      ------------
+
+      procedure Update
+        (Neighbour : Athena.Handles.Star.Star_Class;
+         Distance  : Non_Negative_Real)
+      is
+         use Neighbour_Maps;
+         Position : constant Neighbour_Maps.Cursor :=
+                      Knowledge.Neighbour_Map.Find (Neighbour.Identifier);
+      begin
+         if Has_Element (Position) then
             declare
-               use Neighbour_Maps;
-               Position : constant Neighbour_Maps.Cursor :=
-                            Knowledge.Neighbour_Map.Find (SD.To.Identifier);
+               Item : Neighbour_Record renames
+                        Knowledge.Neighbour_Map (Position);
             begin
-               if Has_Element (Position) then
-                  declare
-                     Item : Neighbour_Record renames
-                              Knowledge.Neighbour_Map (Position);
-                  begin
-                     if SD.Distance < Item.Distance then
-                        Item.Distance := SD.Distance;
-                        Item.Nearest  :=
-                          Athena.Handles.Colony.Get (Colony.Reference_Colony);
-                     end if;
-                  end;
-               else
-                  Knowledge.Neighbour_Map.Insert
-                    (SD.To.Identifier,
-                     Neighbour_Record'
-                       (Neighbour =>
-                            Athena.Handles.Star.Get (SD.To.Reference_Star),
-                        Nearest   =>
-                          Athena.Handles.Colony.Get (Colony.Reference_Colony),
-                        Distance  => SD.Distance));
+               if Distance < Item.Distance then
+                  Item.Distance := Distance;
+                  Item.Nearest  := Handle;
                end if;
             end;
+         else
+            Knowledge.Neighbour_Map.Insert
+              (Neighbour.Identifier,
+               Neighbour_Record'
+                 (Neighbour =>
+                      Athena.Handles.Star.Get (Neighbour.Reference_Star),
+                  Nearest   => Handle,
+                  Distance  => Distance));
          end if;
-      end loop;
+      end Update;
+
+   begin
+
+      Athena.Stars.Iterate_Nearest
+        (To_Star   => Colony.Star,
+         Max_Range => 20.0,
+         Process   => Update'Access);
+
    end Update_Neighbours;
 
 end Athena.Knowledge.Stars;

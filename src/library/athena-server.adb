@@ -11,7 +11,12 @@ with Athena.Options;
 with Athena.Paths;
 with Athena.Random_Names;
 
+with Athena.Managers;
+
+with Athena.Colonies;
 with Athena.Empires.Create;
+with Athena.Ships;
+with Athena.Stars;
 
 with Athena.Db.Database;
 
@@ -159,5 +164,22 @@ package body Athena.Server is
       Athena.Random_Names.Load_Names;
 
    end Initialize;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load is
+   begin
+      Athena.Stars.Load_Stars;
+      Athena.Colonies.Load_Colonies;
+      Athena.Ships.Load_Ships;
+      Athena.Managers.Load_Managers;
+   end Load;
+
+   procedure Save is
+   begin
+      null;
+   end Save;
 
 end Athena.Server;

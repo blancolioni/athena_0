@@ -11,7 +11,6 @@ with Athena.Real_Images;
 
 with Athena.Server;
 
-with Athena.Managers;
 with Athena.Updates;
 
 with Athena.Handles.Empire;
@@ -69,7 +68,7 @@ begin
       Athena.Db.Database.Open;
       Database_Open := True;
 
-      Athena.Managers.Load_Managers;
+      Athena.Server.Load;
 
       declare
          Count : constant Positive :=
@@ -97,6 +96,8 @@ begin
          end;
       end;
 
+      Athena.Server.Save;
+
       Athena.Db.Database.Close;
       Database_Open := False;
 
@@ -106,7 +107,7 @@ begin
    Athena.Db.Database.Open;
    Database_Open := True;
 
-   Athena.Managers.Load_Managers;
+   Athena.Server.Load;
 
    declare
       UI : Athena.UI.Athena_User_Interface'Class :=
@@ -117,6 +118,8 @@ begin
    begin
       UI.Start;
    end;
+
+   Athena.Server.Save;
 
    Athena.Db.Database.Close;
    Database_Open := False;

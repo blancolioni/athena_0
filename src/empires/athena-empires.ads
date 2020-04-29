@@ -2,7 +2,7 @@ with Athena.Money;
 
 with Athena.Handles.Colony;
 with Athena.Handles.Empire;
-with Athena.Handles.Fleet;
+with Athena.Handles.Manager;
 with Athena.Handles.Ship_Design;
 with Athena.Handles.Star;
 with Athena.Handles.Technology;
@@ -29,21 +29,21 @@ package Athena.Empires is
       Amount      : Athena.Money.Money_Type;
       Description : String);
 
-   function Scout_Fleet
+   function Exploration_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class;
+      return Athena.Handles.Manager.Manager_Class;
 
-   function Transport_Fleet
+   function Transport_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class;
+      return Athena.Handles.Manager.Manager_Class;
 
-   function Defender_Fleet
+   function Defense_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class;
+      return Athena.Handles.Manager.Manager_Class;
 
-   function Attack_Fleet
+   function Attack_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Fleet.Fleet_Class;
+      return Athena.Handles.Manager.Manager_Class;
 
    function Scout_Design
      (For_Empire : Athena.Handles.Empire.Empire_Class)

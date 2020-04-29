@@ -114,6 +114,7 @@ package body Athena.Orders.Empires is
             Star   => Colony.Star,
             Design => Order.Ship_Design,
             Fleet  => Order.Fleet,
+            Manager => Order.Manager,
             Name   =>
               Athena.Ships.Name_Ship (Order.Empire, Order.Ship_Design.Name),
             Destination => Order.Send_To);
@@ -127,7 +128,7 @@ package body Athena.Orders.Empires is
 
          Athena.Empires.Pay
            (Order.Empire,
-            Athena.Money.To_Money (Mass),
+            Athena.Money.To_Money (Construct_Cost),
             "building class " & Order.Ship_Design.Name & " ship");
 
       end Execute;

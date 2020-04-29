@@ -1,3 +1,9 @@
+with Ada.Containers.Vectors;
+with Ada.Text_IO;
+
+with WL.String_Maps;
+
+with Athena.Identifiers;
 with Athena.Logging;
 with Athena.Money;
 with Athena.Real_Images;
@@ -9,12 +15,32 @@ with Athena.Handles.Colony.Selections;
 
 package body Athena.Colonies is
 
+   type Colony_Reference is range 1 .. Natural'Last;
+
    function Image (X : Real) return String
                    renames Athena.Real_Images.Approximate_Image;
 
    procedure Log
      (Colony : Athena.Handles.Colony.Colony_Class;
       Message : String);
+
+   type Colony_Record is
+      record
+         Handle : Athena.Handles.Colony.Colony_Handle;
+      end record;
+
+   package Colony_Vectors is
+     new Ada.Containers.Vectors (Colony_Reference, Colony_Record);
+
+   package Colony_Maps is
+     new WL.String_Maps (Colony_Reference);
+
+   package Empire_Colony_Maps is
+     new WL.String_Maps (Colony_Maps.Map, Colony_Maps."=");
+
+   Colony_Vector : Colony_Vectors.Vector;
+   Empire_Colony : Empire_Colony_Maps.Map;
+   Star_Colony   : Colony_Maps.Map;
 
    -----------------
    -- Best_Colony --
@@ -26,20 +52,19 @@ package body Athena.Colonies is
         function (Colony : Athena.Handles.Colony.Colony_Class) return Real)
       return Athena.Handles.Colony.Colony_Class
    is
-      use Athena.Handles.Colony.Selections;
       Best_Score : Real := Real'First;
       Result     : Athena.Handles.Colony.Colony_Handle :=
                      Athena.Handles.Colony.Empty_Handle;
    begin
-      for Colony of Select_Where (Empire = Owned_By) loop
+      for Ref of Empire_Colony.Element (Owned_By.Identifier) loop
          declare
+            Colony     : constant Athena.Handles.Colony.Colony_Handle :=
+                           Colony_Vector (Ref).Handle;
             This_Score : constant Real := Score (Colony);
          begin
             if This_Score > Best_Score then
                Best_Score := This_Score;
-               Result :=
-                 Athena.Handles.Colony.Get
-                   (Colony.Reference_Colony);
+               Result := Colony;
             end if;
          end;
       end loop;
@@ -86,12 +111,16 @@ package body Athena.Colonies is
         (Colony : Athena.Handles.Colony.Colony_Class) return Boolean)
       return Athena.Handles.Colony.Colony_Class
    is
-      use Athena.Handles.Colony.Selections;
    begin
-      for Colony of Select_Where (Empire = Owned_By) loop
-         if Test (Colony) then
-            return Colony;
-         end if;
+      for Ref of Empire_Colony.Element (Owned_By.Identifier) loop
+         declare
+            Colony     : constant Athena.Handles.Colony.Colony_Handle :=
+                           Colony_Vector (Ref).Handle;
+         begin
+            if Test (Colony) then
+               return Colony;
+            end if;
+         end;
       end loop;
       return Athena.Handles.Colony.Empty_Handle;
    end Find_Colony;
@@ -105,10 +134,14 @@ package body Athena.Colonies is
       Process  : not null access procedure
         (Colony : Athena.Handles.Colony.Colony_Class))
    is
-      use Athena.Handles.Colony.Selections;
    begin
-      for Colony of Select_Where (Empire = Owned_By) loop
-         Process (Colony);
+      for Ref of Empire_Colony.Element (Owned_By.Identifier) loop
+         declare
+            Colony     : constant Athena.Handles.Colony.Colony_Handle :=
+                           Colony_Vector (Ref).Handle;
+         begin
+            Process (Colony);
+         end;
       end loop;
    end For_All_Colonies;
 
@@ -120,10 +153,41 @@ package body Athena.Colonies is
      (At_Star : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Colony.Colony_Class
    is
-      use Athena.Handles.Colony.Selections;
+      use Colony_Maps;
+      Position : constant Cursor := Star_Colony.Find (At_Star.Identifier);
    begin
-      return First_Where (Star = At_Star);
+      if Has_Element (Position) then
+         return Colony_Vector (Element (Position)).Handle;
+      else
+         return Athena.Handles.Colony.Empty_Handle;
+      end if;
    end Get_Colony;
+
+   -------------------
+   -- Load_Colonies --
+   -------------------
+
+   procedure Load_Colonies is
+   begin
+      Ada.Text_IO.Put ("loading colonies ...");
+      Ada.Text_IO.Flush;
+
+      for Colony of
+        Athena.Handles.Colony.Selections.Select_All
+      loop
+         Colony_Vector.Append
+           ((Handle => Athena.Handles.Colony.Get (Colony.Reference_Colony)));
+
+         Star_Colony.Insert (Colony.Identifier, Colony_Vector.Last_Index);
+         if not Empire_Colony.Contains (Colony.Empire.Identifier) then
+            Empire_Colony.Insert
+              (Colony.Empire.Identifier, Colony_Maps.Empty_Map);
+         end if;
+         Empire_Colony (Colony.Empire.Identifier)
+           .Insert (Colony.Identifier, Colony_Vector.Last_Index);
+      end loop;
+      Ada.Text_IO.Put_Line (" done");
+   end Load_Colonies;
 
    ---------
    -- Log --
@@ -151,15 +215,16 @@ package body Athena.Colonies is
       To_Star  : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Colony.Colony_Class
    is
-      use Athena.Handles.Colony.Selections;
       Distance : Non_Negative_Real := Non_Negative_Real'Last;
       Result   : Athena.Handles.Colony.Colony_Handle :=
                    Athena.Handles.Colony.Empty_Handle;
    begin
-      for Colony of Select_Where (Empire = Owned_By) loop
+      for Ref of Empire_Colony.Element (Owned_By.Identifier) loop
          declare
-            D : constant Non_Negative_Real :=
-                  Athena.Stars.Distance (Colony.Star, To_Star);
+            Colony     : constant Athena.Handles.Colony.Colony_Handle :=
+                           Colony_Vector (Ref).Handle;
+            D          : constant Non_Negative_Real :=
+                           Athena.Stars.Distance (Colony.Star, To_Star);
          begin
             if D < Distance then
                Distance := D;
@@ -169,8 +234,43 @@ package body Athena.Colonies is
             end if;
          end;
       end loop;
+
       return Result;
    end Nearest_Colony;
+
+   ----------------
+   -- New_Colony --
+   ----------------
+
+   procedure New_Colony
+     (At_Star : Athena.Handles.Star.Star_Class;
+      Owner   : Athena.Handles.Empire.Empire_Class;
+      Pop     : Non_Negative_Real;
+      Ind     : Non_Negative_Real;
+      Mat     : Non_Negative_Real)
+   is
+      Colony : constant Athena.Handles.Colony.Colony_Class :=
+                 Athena.Handles.Colony.Create
+                   (Identifier => Athena.Identifiers.Next_Identifier,
+                    Star       => At_Star,
+                    Empire     => Owner,
+                    Construct  => 0.0,
+                    Pop        => Pop,
+                    Colonists  => 0.0,
+                    Industry   => Ind,
+                    Material   => Mat);
+   begin
+      Athena.Stars.Set_Colony (At_Star, Colony);
+      Colony_Vector.Append
+        ((Handle => Athena.Handles.Colony.Get (Colony.Reference_Colony)));
+
+      Star_Colony.Insert (Colony.Identifier, Colony_Vector.Last_Index);
+      if not Empire_Colony.Contains (Owner.Identifier) then
+         Empire_Colony.Insert (Owner.Identifier, Colony_Maps.Empty_Map);
+      end if;
+      Empire_Colony (Owner.Identifier)
+        .Insert (Colony.Identifier, Colony_Vector.Last_Index);
+   end New_Colony;
 
    ----------------------
    -- Produce_Material --

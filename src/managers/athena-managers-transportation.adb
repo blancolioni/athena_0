@@ -7,6 +7,7 @@ with Athena.Orders;
 with Athena.Logging;
 with Athena.Real_Images;
 
+with Athena.Handles.Fleet;
 with Athena.Handles.Ship;
 with Athena.Handles.Ship_Design;
 with Athena.Handles.Star;
@@ -31,7 +32,7 @@ package body Athena.Managers.Transportation is
 
    procedure Create_Orders
      (For_Empire : Athena.Handles.Empire.Empire_Class;
-      Priority   : Positive)
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
    begin
       for Order of
@@ -72,11 +73,11 @@ package body Athena.Managers.Transportation is
                        (Empire   => For_Empire,
                         Design   => Transport,
                         Count    => Required,
-                        Fleet    =>
-                          Athena.Empires.Transport_Fleet (For_Empire),
+                        Fleet    => Athena.Handles.Fleet.Empty_Handle,
+                        Manager  => Manager,
                         Send_To  =>
                           Athena.Handles.Star.Get (Order.From),
-                        Priority => Priority);
+                        Priority => Manager.Priority);
                   end if;
                end;
             end if;

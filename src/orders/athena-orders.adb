@@ -22,6 +22,7 @@ package body Athena.Orders is
      (Empire   : Athena.Handles.Empire.Empire_Class;
       Design   : Athena.Handles.Ship_Design.Ship_Design_Class;
       Fleet    : Athena.Handles.Fleet.Fleet_Class;
+      Manager  : Athena.Handles.Manager.Manager_Class;
       Send_To  : Athena.Handles.Star.Star_Class;
       Count    : Positive;
       Priority : Positive)
@@ -38,6 +39,7 @@ package body Athena.Orders is
             Empire      => Empire,
             Priority    => Priority,
             Ship_Design => Design,
+            Manager     => Manager,
             Fleet       => Fleet,
             Send_To     => Send_To);
       end loop;

@@ -57,9 +57,9 @@ package body Athena.Orders.Colonies is
 
       declare
          Produced      : constant Non_Negative_Real := Max;
-         New_Construct : constant Non_Negative_Real :=
+         New_Construct : constant Real :=
                            Colony.Construct - Produced * 4.0;
-         New_Material  : constant Non_Negative_Real :=
+         New_Material  : constant Real :=
                            Colony.Material - Produced;
          New_Industry  : constant Non_Negative_Real :=
                            Colony.Industry + Produced;
@@ -84,8 +84,8 @@ package body Athena.Orders.Colonies is
 
          Colony.Update_Colony
            .Set_Industry (New_Industry)
-           .Set_Construct (New_Construct)
-           .Set_Material (New_Material)
+           .Set_Construct (Real'Max (New_Construct, 0.0))
+           .Set_Material (Real'Max (New_Material, 0.0))
            .Done;
 
          Athena.Empires.Pay (Colony.Empire, To_Money (Produced),

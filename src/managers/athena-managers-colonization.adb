@@ -25,7 +25,7 @@ package body Athena.Managers.Colonization is
 
    procedure Create_Orders
      (For_Empire : Athena.Handles.Empire.Empire_Class;
-      Priority   : Positive)
+      Manager    : Athena.Handles.Manager.Manager_Class)
    is
 
       Knowledge   : Athena.Knowledge.Stars.Star_Knowledge;
@@ -121,7 +121,7 @@ package body Athena.Managers.Colonization is
               (Athena.Db.Colonists, 10.0,
                From,
                Targets.First_Element.Star,
-               Priority);
+               Manager.Priority);
          end;
 
          Knowledge.Set_Colonizing

@@ -7,7 +7,7 @@ with Athena.Ships.Create;
 
 with Athena.Handles.Colony;
 with Athena.Handles.Empire;
-with Athena.Handles.System_Fleets;
+with Athena.Handles.Fleet;
 with Athena.Handles.System_Designs;
 
 with Athena.Handles.Empire_Capital;
@@ -18,10 +18,6 @@ with Athena.Handles.Manager.Selections;
 with Athena.Handles.Empire_Manager;
 
 with Athena.Handles.Ship_Design;
-
-with Athena.Handles.Fleet;
-
-with Athena.Db;
 
 package body Athena.Empires.Create is
 
@@ -54,27 +50,6 @@ package body Athena.Empires.Create is
                             Debt       => Athena.Money.Zero,
                             Rgb        => RGB);
 
-      Scouts         : constant Handles.Fleet.Fleet_Handle :=
-                         Handles.Fleet.Create
-                           (Identifier => Identifiers.Next_Identifier,
-                            Name       => Adjective & " Scouts",
-                            Empire     => Empire);
-      Transports     : constant Handles.Fleet.Fleet_Handle :=
-                         Handles.Fleet.Create
-                           (Identifier => Identifiers.Next_Identifier,
-                            Name       => Adjective & " Transports",
-                            Empire     => Empire);
-      Defenders     : constant Handles.Fleet.Fleet_Handle :=
-                         Handles.Fleet.Create
-                           (Identifier => Identifiers.Next_Identifier,
-                            Name       => Adjective & " Defenders",
-                            Empire     => Empire);
-      Attackers     : constant Handles.Fleet.Fleet_Handle :=
-                         Handles.Fleet.Create
-                           (Identifier => Identifiers.Next_Identifier,
-                            Name       => Adjective & " Attackers",
-                            Empire     => Empire);
-
    begin
 
       Star.Update
@@ -87,20 +62,14 @@ package body Athena.Empires.Create is
          Star   => Star);
 
       Athena.Handles.Colony.Create
-        (Star      => Star,
-         Empire    => Empire,
-         Construct => 0.0,
-         Pop       => 1000.0,
-         Colonists => 0.0,
-         Industry  => 100.0,
-         Material  => 100.0);
-
-      Athena.Handles.System_Fleets.Create
-        (Empire     => Empire,
-         Scouts     => Scouts,
-         Transports => Transports,
-         Defenders  => Defenders,
-         Attackers  => Attackers);
+        (Identifier => Athena.Identifiers.Next_Identifier,
+         Star       => Star,
+         Empire     => Empire,
+         Construct  => 0.0,
+         Pop        => 1000.0,
+         Colonists  => 0.0,
+         Industry   => 100.0,
+         Material   => 100.0);
 
       for Tec of
         Athena.Handles.Technology.Selections.Select_All
@@ -118,11 +87,7 @@ package body Athena.Empires.Create is
          Athena.Handles.Empire_Manager.Create
            (Empire  => Empire,
             Manager => Manager,
-            Enabled => True,
-            Fleet   => (if Manager.Tag = "explore" then Scouts
-                        elsif Manager.Tag = "transport" then Transports
-                        else Handles.Fleet.Get
-                          (Athena.Db.Null_Fleet_Reference)));
+            Enabled => True);
       end loop;
 
       declare
@@ -143,39 +108,44 @@ package body Athena.Empires.Create is
       begin
 
          Athena.Ships.Create.Create_Ship
-           (Empire => Empire,
-            Star   => Star,
-            Fleet  => Scouts,
-            Design => Scout_Design,
-            Name   => "Scout I");
+           (Empire  => Empire,
+            Star    => Star,
+            Fleet   => Athena.Handles.Fleet.Empty_Handle,
+            Manager => Athena.Empires.Exploration_Manager (Empire),
+            Design  => Scout_Design,
+            Name    => "Scout I");
 
          Athena.Ships.Create.Create_Ship
-           (Empire => Empire,
-            Star   => Star,
-            Fleet  => Scouts,
-            Design => Scout_Design,
-            Name   => "Scout II");
+           (Empire  => Empire,
+            Star    => Star,
+            Fleet   => Athena.Handles.Fleet.Empty_Handle,
+            Manager => Athena.Empires.Exploration_Manager (Empire),
+            Design  => Scout_Design,
+            Name    => "Scout II");
 
          Athena.Ships.Create.Create_Ship
-           (Empire => Empire,
-            Star   => Star,
-            Fleet  => Defenders,
-            Design => Defender_Design,
-            Name   => "Defender I");
+           (Empire  => Empire,
+            Star    => Star,
+            Fleet   => Athena.Handles.Fleet.Empty_Handle,
+            Manager => Athena.Empires.Defense_Manager (Empire),
+            Design  => Defender_Design,
+            Name    => "Defender I");
 
          Athena.Ships.Create.Create_Ship
-           (Empire => Empire,
-            Star   => Star,
-            Fleet  => Transports,
-            Design => Transport_Design,
-            Name   => "Transport I");
+           (Empire  => Empire,
+            Star    => Star,
+            Fleet   => Athena.Handles.Fleet.Empty_Handle,
+            Manager => Athena.Empires.Transport_Manager (Empire),
+            Design  => Transport_Design,
+            Name    => "Transport I");
 
          Athena.Ships.Create.Create_Ship
-           (Empire => Empire,
-            Star   => Star,
-            Fleet  => Attackers,
-            Design => Destroyer_Design,
-            Name   => "Destroyer I");
+           (Empire  => Empire,
+            Star    => Star,
+            Fleet   => Athena.Handles.Fleet.Empty_Handle,
+            Manager => Athena.Empires.Attack_Manager (Empire),
+            Design  => Destroyer_Design,
+            Name    => "Destroyer I");
 
          Athena.Handles.System_Designs.Create
            (Empire     => Empire,

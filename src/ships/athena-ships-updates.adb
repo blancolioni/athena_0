@@ -1,6 +1,7 @@
 with Athena.Logging;
 with Athena.Real_Images;
 
+with Athena.Colonies;
 with Athena.Stars;
 with Athena.Turns;
 
@@ -171,18 +172,13 @@ package body Athena.Ships.Updates is
          when Athena.Db.Colonists =>
             if not Colony.Has_Element then
                --  create a new colony
-               Athena.Handles.Colony.Create
-                 (Star      => Ship.Star,
-                  Empire    => Ship.Empire,
-                  Construct => 0.0,
-                  Pop       => Unloaded_Quantity * 10.0,
-                  Colonists => 0.0,
-                  Industry  => 0.0,
-                  Material  => 0.0);
 
-               Ship.Star.Update_Star
-                 .Set_Owner (Ship.Empire.Reference_Empire)
-                 .Done;
+               Athena.Colonies.New_Colony
+                 (At_Star => Ship.Star,
+                  Owner   => Ship.Empire,
+                  Pop     => Unloaded_Quantity * 10.0,
+                  Ind     => 0.0,
+                  Mat     => 0.0);
 
                Ship.Update_Ship
                  .Set_Colonists (Cargo_Quantity - Unloaded_Quantity)
@@ -215,19 +211,23 @@ package body Athena.Ships.Updates is
          when Athena.Db.Material =>
 
             if not Colony.Has_Element then
-               --  create a new colony
-               Athena.Handles.Colony.Create
-                 (Star      => Ship.Star,
-                  Empire    => Ship.Empire,
-                  Construct => 0.0,
-                  Pop       => 0.0,
-                  Colonists => 0.0,
-                  Industry  => 0.0,
-                  Material  => Unloaded_Quantity);
 
-               Ship.Star.Update_Star
-                 .Set_Owner (Ship.Empire.Reference_Empire)
-                 .Done;
+               --  Canceled
+               return True;
+
+               --  create a new colony
+--                 Athena.Handles.Colony.Create
+--                   (Star      => Ship.Star,
+--                    Empire    => Ship.Empire,
+--                    Construct => 0.0,
+--                    Pop       => 0.0,
+--                    Colonists => 0.0,
+--                    Industry  => 0.0,
+--                    Material  => Unloaded_Quantity);
+--
+--                 Ship.Star.Update_Star
+--                   .Set_Owner (Ship.Empire.Reference_Empire)
+--                   .Done;
 
             else
                declare
@@ -249,19 +249,23 @@ package body Athena.Ships.Updates is
          when Athena.Db.Industry =>
 
             if not Colony.Has_Element then
-               --  create a new colony
-               Athena.Handles.Colony.Create
-                 (Star      => Ship.Star,
-                  Empire    => Ship.Empire,
-                  Construct => 0.0,
-                  Pop       => 0.0,
-                  Colonists => 0.0,
-                  Industry  => Unloaded_Quantity,
-                  Material  => 0.0);
 
-               Ship.Star.Update_Star
-                 .Set_Owner (Ship.Empire.Reference_Empire)
-                 .Done;
+               --  Canceled
+               return True;
+
+               --  create a new colony
+--                 Athena.Handles.Colony.Create
+--                   (Star      => Ship.Star,
+--                    Empire    => Ship.Empire,
+--                    Construct => 0.0,
+--                    Pop       => 0.0,
+--                    Colonists => 0.0,
+--                    Industry  => Unloaded_Quantity,
+--                    Material  => 0.0);
+--
+--                 Ship.Star.Update_Star
+--                   .Set_Owner (Ship.Empire.Reference_Empire)
+--                   .Done;
 
             else
                declare
@@ -437,7 +441,6 @@ package body Athena.Ships.Updates is
               .Done;
          else
             Ship.Update_Ship
-
               .Set_First_Order (Index)
               .Done;
          end if;

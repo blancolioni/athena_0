@@ -16,8 +16,9 @@ package body Athena.Ships.Create is
      (Empire      : Athena.Handles.Empire.Empire_Class;
       Star        : Athena.Handles.Star.Star_Class;
       Design      : Athena.Handles.Ship_Design.Ship_Design_Class;
-      Fleet       : Athena.Handles.Fleet.Fleet_Class;
       Name        : String;
+      Fleet       : Athena.Handles.Fleet.Fleet_Class;
+      Manager     : Athena.Handles.Manager.Manager_Class;
       Destination : Athena.Handles.Star.Star_Class :=
         Athena.Handles.Star.Empty_Handle)
    is
@@ -31,6 +32,7 @@ package body Athena.Ships.Create is
                      Star        => Star,
                      Ship_Design => Design,
                      Fleet       => Fleet,
+                     Manager     => Manager,
                      Name        => Name,
                      Destination => Destination,
                      First_Order => 0,
@@ -43,7 +45,8 @@ package body Athena.Ships.Create is
    begin
       for Component of Select_Where (Ship_Design = Design) loop
          Athena.Handles.Ship_Component.Create
-           (Ship             => Ship,
+           (Identifier       => Athena.Identifiers.Next_Identifier,
+            Ship             => Ship,
             Component        => Component.Component,
             Design_Component => Component,
             Condition        => 1.0,
@@ -51,6 +54,7 @@ package body Athena.Ships.Create is
               Athena.Empires.Current_Tec_Level
                 (Empire, Component.Component.Technology));
       end loop;
+      Add_Ship (Ship);
    end Create_Ship;
 
 end Athena.Ships.Create;
