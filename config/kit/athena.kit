@@ -248,4 +248,35 @@ record Fleet_Journey : Journey is
     key Fleet;
 end Fleet_Journey;
 
+record Encounter is
+    key Turn;
+    key Star;
+end Encounter;
+
+record Antagonist is
+    key Encounter;
+    Empire;
+end Antagonist;
+
+record Participant is
+    key Encounter;
+    Ship;
+end Participant;
+
+type Ship_Encounter_Action is
+    (No_Action, Fire_Weapon, Explode);
+
+record Encounter_Action is
+    key Encounter;
+    Participant;
+    Time_Stamp : Long_Float;
+    X          : Long_Float;
+    Y          : Long_Float;
+    Heading    : Long_Float;
+    Shield     : Long_Float;
+    Action     : Ship_Encounter_Action;
+    Component  : Ship_Component;
+    Target     : Participant;
+end Encounter_Action;
+
 end Athena;

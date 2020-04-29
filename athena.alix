@@ -4,6 +4,7 @@ source_dir = src/colonies
 source_dir = src/configure
 source_dir = src/driver
 source_dir = src/empires
+source_dir = src/encounters
 source_dir = src/kit
 source_dir = src/library
 source_dir = src/managers

@@ -1,3 +1,5 @@
+with WL.String_Maps;
+
 with Athena.Logging;
 with Athena.Money;
 with Athena.Turns;
@@ -9,6 +11,9 @@ with Athena.Orders.Ships;
 
 with Athena.Empires;
 with Athena.Ships.Updates;
+
+with Athena.Encounters;
+with Athena.Treaties;
 
 with Athena.Db.Colony_Order;
 with Athena.Db.Research_Order;
@@ -22,6 +27,7 @@ with Athena.Handles.Fleet_Order.Selections;
 with Athena.Handles.Research_Order;
 with Athena.Handles.Ship.Selections;
 with Athena.Handles.Ship_Build_Order;
+with Athena.Handles.Star;
 with Athena.Handles.Upgrade_Order;
 
 package body Athena.Updates is
@@ -57,6 +63,8 @@ package body Athena.Updates is
    procedure For_All_Colonies
      (Process : not null access
         procedure (Colony : Athena.Handles.Colony.Colony_Class));
+
+   procedure Run_Encounters;
 
    ----------------------
    -- After_Production --
@@ -271,6 +279,76 @@ package body Athena.Updates is
       end loop;
    end For_All_Empires;
 
+   --------------------
+   -- Run_Encounters --
+   --------------------
+
+   procedure Run_Encounters is
+
+      type Star_Record is
+         record
+            Star    : Athena.Handles.Star.Star_Handle;
+            Ships   : Athena.Ships.Ship_Lists.List;
+            Hostile : Boolean;
+         end record;
+
+      package Star_Record_Maps is
+        new WL.String_Maps (Star_Record);
+
+      Star_Map : Star_Record_Maps.Map;
+
+      procedure Record_Ship (Ship : Athena.Handles.Ship.Ship_Class);
+
+      -----------------
+      -- Record_Ship --
+      -----------------
+
+      procedure Record_Ship (Ship : Athena.Handles.Ship.Ship_Class) is
+         Key : constant String := Ship.Star.Identifier;
+      begin
+         if not Star_Map.Contains (Key) then
+            Star_Map.Insert
+              (Key,
+               Star_Record'
+                 (Star    =>
+                      Athena.Handles.Star.Get (Ship.Star.Reference_Star),
+                  Ships   => Athena.Ships.Ship_Lists.Empty_List,
+                  Hostile => False));
+         end if;
+
+         if not Star_Map (Key).Hostile then
+            for Other_Ship of Star_Map (Key).Ships loop
+               if Other_Ship.Empire.Identifier /= Ship.Empire.Identifier then
+                  Athena.Logging.Log
+                    ("encounter: checking treaty between "
+                     & Other_Ship.Empire.Name
+                     & " and " & Ship.Empire.Name);
+               end if;
+
+               if Athena.Treaties.At_War (Other_Ship.Empire, Ship.Empire) then
+                  Star_Map (Key).Hostile := True;
+               end if;
+            end loop;
+         end if;
+
+         Star_Map (Key).Ships.Append
+           (Athena.Handles.Ship.Get (Ship.Reference_Ship));
+
+      end Record_Ship;
+
+   begin
+      Athena.Ships.For_All_Ships (Record_Ship'Access);
+
+      for Element of Star_Map loop
+         if Element.Hostile then
+            Athena.Encounters.Execute
+              (Athena.Encounters.Create
+                 (Element.Star, Element.Ships));
+         end if;
+      end loop;
+
+   end Run_Encounters;
+
    ----------------
    -- Run_Update --
    ----------------
@@ -312,6 +390,8 @@ package body Athena.Updates is
       Athena.Ships.For_All_Ships (Athena.Ships.Updates.Update'Access);
 
       For_All_Colonies (After_Production'Access);
+
+      Run_Encounters;
 
       For_All_Empires (Debt_Service'Access);
 
