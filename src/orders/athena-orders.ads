@@ -30,6 +30,10 @@ package Athena.Orders is
       To       : Athena.Handles.Star.Star_Class;
       Priority : Positive);
 
+   procedure Move_Fleet
+     (Fleet       : Athena.Handles.Fleet.Fleet_Class;
+      Destination : Athena.Handles.Star.Star_Class);
+
    procedure Build_Ships
      (Empire   : Athena.Handles.Empire.Empire_Class;
       Design   : Athena.Handles.Ship_Design.Ship_Design_Class;

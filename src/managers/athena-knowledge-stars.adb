@@ -10,6 +10,12 @@ with Athena.Db.Star_Knowledge;
 
 package body Athena.Knowledge.Stars is
 
+   function Closer (Left, Right : Neighbour_Record) return Boolean
+   is (Left.Distance < Right.Distance);
+
+   package Neighbour_Sorting is
+     new Neighbour_Lists.Generic_Sorting (Closer);
+
    type Cached_Knowledge is
       record
          Turn      : Positive;
@@ -69,6 +75,33 @@ package body Athena.Knowledge.Stars is
          end;
       end loop;
    end Iterate_Neighbours;
+
+   ---------------------
+   -- Iterate_Threats --
+   ---------------------
+
+   procedure Iterate_Threats
+     (Knowledge : Star_Knowledge'Class;
+      Max_Range : Non_Negative_Real;
+      Process   : not null access
+        procedure (Threat      : Athena.Handles.Empire.Empire_Class;
+                   Threat_Star : Athena.Handles.Star.Star_Class;
+                   Nearest     : Athena.Handles.Colony.Colony_Class;
+                   Stop        : out Boolean))
+   is
+   begin
+      for Element of Knowledge.Threat_List loop
+         exit when Element.Distance > Max_Range;
+
+         declare
+            Stop : Boolean;
+         begin
+            Process (Element.Neighbour.Owner, Element.Neighbour,
+                     Element.Nearest, Stop);
+            exit when Stop;
+         end;
+      end loop;
+   end Iterate_Threats;
 
    -------------------------
    -- Iterate_Uncolonized --
@@ -148,12 +181,6 @@ package body Athena.Knowledge.Stars is
         (For_Empire.Name & "/knowledge: sorting neighbours");
 
       declare
-         function Closer (Left, Right : Neighbour_Record) return Boolean
-         is (Left.Distance < Right.Distance);
-
-         package Neighbour_Sorting is
-           new Neighbour_Lists.Generic_Sorting (Closer);
-
       begin
          for Neighbour of Knowledge.Neighbour_Map loop
             Knowledge.Neighbour_List.Append (Neighbour);
@@ -161,6 +188,23 @@ package body Athena.Knowledge.Stars is
 
          Neighbour_Sorting.Sort (Knowledge.Neighbour_List);
       end;
+
+      Athena.Logging.Log
+        (For_Empire.Name & "/knowledge: finding threats");
+
+      for Element of Knowledge.Neighbour_List loop
+         if Element.Neighbour.Owner.Has_Element then
+            declare
+               Id : constant String := Element.Neighbour.Owner.Identifier;
+            begin
+               if not Knowledge.Threat_Map.Contains (Id) then
+                  Knowledge.Threat_Map.Insert
+                    (Id, Element);
+                  Knowledge.Threat_List.Append (Element);
+               end if;
+            end;
+         end if;
+      end loop;
 
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: scanning star knowledge");
@@ -260,7 +304,11 @@ package body Athena.Knowledge.Stars is
          Position : constant Neighbour_Maps.Cursor :=
                       Knowledge.Neighbour_Map.Find (Neighbour.Identifier);
       begin
-         if Has_Element (Position) then
+         if Neighbour.Owner.Has_Element
+           and then Neighbour.Owner.Identifier = Knowledge.Empire.Identifier
+         then
+            null;
+         elsif Has_Element (Position) then
             declare
                Item : Neighbour_Record renames
                         Knowledge.Neighbour_Map (Position);
@@ -271,13 +319,17 @@ package body Athena.Knowledge.Stars is
                end if;
             end;
          else
-            Knowledge.Neighbour_Map.Insert
-              (Neighbour.Identifier,
-               Neighbour_Record'
-                 (Neighbour =>
-                      Athena.Handles.Star.Get (Neighbour.Reference_Star),
-                  Nearest   => Handle,
-                  Distance  => Distance));
+            declare
+               Star : constant Athena.Handles.Star.Star_Handle :=
+                        Athena.Handles.Star.Get (Neighbour.Reference_Star);
+            begin
+               Knowledge.Neighbour_Map.Insert
+                 (Neighbour.Identifier,
+                  Neighbour_Record'
+                    (Neighbour => Star,
+                     Nearest   => Handle,
+                     Distance  => Distance));
+            end;
          end if;
       end Update;
 

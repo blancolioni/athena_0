@@ -31,6 +31,15 @@ package Athena.Knowledge.Stars is
                    Nearest   : Athena.Handles.Colony.Colony_Class;
                    Stop      : out Boolean));
 
+   procedure Iterate_Threats
+     (Knowledge : Star_Knowledge'Class;
+      Max_Range : Non_Negative_Real;
+      Process   : not null access
+        procedure (Threat      : Athena.Handles.Empire.Empire_Class;
+                   Threat_Star : Athena.Handles.Star.Star_Class;
+                   Nearest     : Athena.Handles.Colony.Colony_Class;
+                   Stop        : out Boolean));
+
    procedure Iterate_Uncolonized
      (Knowledge : Star_Knowledge'Class;
       Process   : not null access
@@ -71,6 +80,8 @@ private
          Empire         : Athena.Handles.Empire.Empire_Handle;
          Neighbour_Map  : Neighbour_Maps.Map;
          Neighbour_List : Neighbour_Lists.List;
+         Threat_Map  : Neighbour_Maps.Map;
+         Threat_List : Neighbour_Lists.List;
          Uncolonized    : Star_Maps.Map;
          Visited        : Star_Maps.Map;
          Colonizing     : Star_Maps.Map;

@@ -1,7 +1,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
 with Athena.Logging;
-with Athena.Real_Images;
 
 with Athena.Colonies;
 with Athena.Empires;
@@ -15,9 +14,6 @@ with Athena.Handles.Star;
 with Athena.Db;
 
 package body Athena.Managers.Colonization is
-
-   function Image (X : Real) return String
-                   renames Athena.Real_Images.Approximate_Image;
 
    -------------------
    -- Create_Orders --

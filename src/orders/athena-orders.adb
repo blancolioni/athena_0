@@ -2,9 +2,11 @@ with Athena.Logging;
 with Athena.Real_Images;
 with Athena.Turns;
 
+with Athena.Empires;
 with Athena.Stars;
 
 with Athena.Handles.Colony_Order;
+with Athena.Handles.Fleet_Order;
 with Athena.Handles.Research_Order;
 with Athena.Handles.Ship_Build_Order;
 with Athena.Handles.Transport_Order;
@@ -39,7 +41,8 @@ package body Athena.Orders is
             Empire      => Empire,
             Priority    => Priority,
             Ship_Design => Design,
-            Manager     => Manager,
+            Manager     =>
+              Athena.Empires.Get_Manager (Empire, Manager),
             Fleet       => Fleet,
             Send_To     => Send_To);
       end loop;
@@ -76,6 +79,29 @@ package body Athena.Orders is
          Cargo     => Cargo,
          Quantity  => Quantity);
    end Move_Cargo;
+
+   ----------------
+   -- Move_Fleet --
+   ----------------
+
+   procedure Move_Fleet
+     (Fleet       : Athena.Handles.Fleet.Fleet_Class;
+      Destination : Athena.Handles.Star.Star_Class)
+   is
+   begin
+      Athena.Logging.Log
+        (Fleet.Empire.Name & " fleet "
+         & Fleet.Name
+         & " ordered to move to "
+         & Destination.Name);
+
+      Athena.Handles.Fleet_Order.Create
+        (Turn        => Athena.Turns.Current_Turn,
+         Empire      => Fleet.Empire,
+         Priority    => 10,
+         Fleet       => Fleet,
+         Destination => Destination);
+   end Move_Fleet;
 
    --------------------
    -- Order_Industry --

@@ -1,4 +1,5 @@
 private with Athena.Handles.Empire;
+private with Athena.Real_Images;
 
 package Athena.Managers is
 
@@ -7,6 +8,9 @@ package Athena.Managers is
    procedure Run_Managers;
 
 private
+
+   function Image (X : Real) return String
+                   renames Athena.Real_Images.Approximate_Image;
 
    procedure Log
      (Manager_Tag : String;

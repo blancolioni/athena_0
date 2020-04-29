@@ -15,6 +15,8 @@ with Athena.Handles.Colony.Selections;
 
 package body Athena.Colonies is
 
+   Log_Use_Assets : constant Boolean := False;
+
    type Colony_Reference is range 1 .. Natural'Last;
 
    function Image (X : Real) return String
@@ -351,21 +353,24 @@ package body Athena.Colonies is
       Description : String)
    is
    begin
-      if Construct = 0.0 and then Material = 0.0 then
-         Log (Colony, "uses no assets for " & Description);
-      elsif Construct = 0.0 then
-         Log (Colony,
-              "uses " & Image (Material) & " material for "
-              & Description);
-      elsif Material = 0.0 then
-         Log (Colony,
-              "uses " & Image (Construct) & " construct for "
-              & Description);
-      else
-         Log (Colony,
-              "uses " & Image (Construct) & " construct"
-              & " and " & Image (Material) & " material for "
-              & Description);
+
+      if Log_Use_Assets then
+         if Construct = 0.0 and then Material = 0.0 then
+            Log (Colony, "uses no assets for " & Description);
+         elsif Construct = 0.0 then
+            Log (Colony,
+                 "uses " & Image (Material) & " material for "
+                 & Description);
+         elsif Material = 0.0 then
+            Log (Colony,
+                 "uses " & Image (Construct) & " construct for "
+                 & Description);
+         else
+            Log (Colony,
+                 "uses " & Image (Construct) & " construct"
+                 & " and " & Image (Material) & " material for "
+                 & Description);
+         end if;
       end if;
 
       declare

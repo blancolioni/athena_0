@@ -18,7 +18,7 @@ package body Athena.Ships.Create is
       Design      : Athena.Handles.Ship_Design.Ship_Design_Class;
       Name        : String;
       Fleet       : Athena.Handles.Fleet.Fleet_Class;
-      Manager     : Athena.Handles.Manager.Manager_Class;
+      Manager     : Athena.Handles.Empire_Manager.Empire_Manager_Class;
       Destination : Athena.Handles.Star.Star_Class :=
         Athena.Handles.Star.Empty_Handle)
    is

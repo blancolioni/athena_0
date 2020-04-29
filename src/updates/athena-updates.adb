@@ -18,6 +18,7 @@ with Athena.Db.Upgrade_Order;
 with Athena.Handles.Colony.Selections;
 with Athena.Handles.Colony_Order;
 with Athena.Handles.Empire.Selections;
+with Athena.Handles.Fleet_Order.Selections;
 with Athena.Handles.Research_Order;
 with Athena.Handles.Ship.Selections;
 with Athena.Handles.Ship_Build_Order;
@@ -120,7 +121,7 @@ package body Athena.Updates is
       end if;
       if New_Debt > Zero then
          Athena.Logging.Log
-           (Empire.Name & ": debt " & Athena.Money.Show (Empire.Debt)
+           (Empire.Name & ": debt " & Athena.Money.Show (New_Debt)
             & "; interest " & Athena.Money.Show (Interest)
             & "; new debt " & Athena.Money.Show (New_Debt + Interest));
       end if;
@@ -234,7 +235,7 @@ package body Athena.Updates is
       declare
          Total : constant Athena.Money.Money_Type :=
                    Athena.Money.To_Money
-                     (Total_Mass / 10.0 + Real (Total_Ships));
+                     (Total_Mass / 2.0 + 5.0 * Real (Total_Ships));
       begin
          Athena.Empires.Pay (Fleet_Owner, Total, "fleet maintenance");
       end;
@@ -294,6 +295,20 @@ package body Athena.Updates is
 
       For_All_Empires (Execute_Research_Orders'Access);
 
+      declare
+         use Athena.Handles.Fleet_Order.Selections;
+      begin
+         for Order of
+           Select_Where (Turn = Athena.Turns.Current_Turn)
+         loop
+            Order.Fleet.Update_Fleet
+              .Set_Destination (Order.Destination.Reference_Star)
+              .Set_Progress (0.0)
+              .Done;
+         end loop;
+      end;
+
+      Athena.Ships.For_All_Fleets (Athena.Ships.Updates.Update'Access);
       Athena.Ships.For_All_Ships (Athena.Ships.Updates.Update'Access);
 
       For_All_Colonies (After_Production'Access);

@@ -11,8 +11,8 @@ with Athena.Voronoi_Diagrams;
 with Athena.Empires;
 with Athena.Turns;
 
+with Athena.Handles.Journey.Selections;
 with Athena.Handles.Ship.Selections;
-with Athena.Handles.Ship_Journey.Selections;
 with Athena.Handles.Star.Selections;
 
 package body Athena.UI.Models.Galaxy is
@@ -48,7 +48,8 @@ package body Athena.UI.Models.Galaxy is
 
    type Journey_Record is
       record
-         Ship     : Athena.Handles.Ship.Ship_Handle;
+         Empire   : Athena.Handles.Empire.Empire_Handle;
+         Size     : Nazar.Nazar_Float;
          X1, Y1   : Nazar.Nazar_Float;
          X2, Y2   : Nazar.Nazar_Float;
       end record;
@@ -183,6 +184,17 @@ package body Athena.UI.Models.Galaxy is
          Model.Line_To (Journey.X2, Journey.Y2);
          Model.Render;
          Model.Restore_State;
+
+         if Real (Journey.Size) > 1.0 then
+            Model.Save_State;
+            Model.Move_To (Journey.X2, Journey.Y2);
+            Model.Set_Fill (True);
+            Model.Set_Color ((0.8, 0.8, 0.8, 1.0));
+            Model.Circle (Journey.Size);
+            Model.Render;
+            Model.Restore_State;
+         end if;
+
       end loop;
 
       Model.Restore_State;
@@ -290,32 +302,34 @@ package body Athena.UI.Models.Galaxy is
       Model.Journeys.Clear;
 
       declare
-         use Athena.Handles.Ship_Journey.Selections;
+         use Athena.Handles.Journey.Selections;
       begin
          for Journey of Select_Where
            (Turn = Athena.Turns.Previous_Turn)
          loop
-            declare
-               use Nazar;
-               X1   : constant Real := Journey.From.X;
-               Y1   : constant Real := Journey.From.Y;
-               X2   : constant Real :=
-                        X1 + (Journey.To.X - X1) * Journey.Progress;
-               Y2   : constant Real :=
-                        Y1 + (Journey.To.Y - Y1) * Journey.Progress;
-               Ship : constant Athena.Handles.Ship.Ship_Handle :=
-                        Athena.Handles.Ship.Get
-                          (Journey.Ship.Reference_Ship);
-               Rec  : constant Journey_Record :=
-                        Journey_Record'
-                          (Ship => Ship,
-                           X1   => Nazar_Float (X1),
-                           Y1   => Nazar_Float (Y1),
-                           X2   => Nazar_Float (X2),
-                           Y2   => Nazar_Float (Y2));
-            begin
-               Model.Journeys.Append (Rec);
-            end;
+            if Journey.Progress < 1.0 then
+               declare
+                  use Nazar;
+                  X1   : constant Real := Journey.From.X;
+                  Y1   : constant Real := Journey.From.Y;
+                  X2   : constant Real :=
+                           X1 + (Journey.To.X - X1) * Journey.Progress;
+                  Y2   : constant Real :=
+                           Y1 + (Journey.To.Y - Y1) * Journey.Progress;
+                  Rec  : constant Journey_Record :=
+                           Journey_Record'
+                             (Empire => Athena.Handles.Empire.Get
+                                (Journey.Empire.Reference_Empire),
+                              Size   =>
+                                Nazar.Nazar_Float (Journey.Mass / 100.0),
+                              X1     => Nazar_Float (X1),
+                              Y1     => Nazar_Float (Y1),
+                              X2     => Nazar_Float (X2),
+                              Y2     => Nazar_Float (Y2));
+               begin
+                  Model.Journeys.Append (Rec);
+               end;
+            end if;
          end loop;
       end;
 

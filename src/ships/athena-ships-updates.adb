@@ -8,6 +8,7 @@ with Athena.Turns;
 with Athena.Knowledge.Stars;
 
 with Athena.Handles.Colony;
+with Athena.Handles.Fleet_Journey;
 with Athena.Handles.Ship_Journey;
 with Athena.Handles.Star;
 
@@ -331,11 +332,13 @@ package body Athena.Ships.Updates is
             Ship.Update_Ship.Set_Experience (New_XP).Done;
 
             Athena.Handles.Ship_Journey.Create
-              (Turn     => Athena.Turns.Current_Turn,
-               Ship     => Ship,
-               From     => Ship.Star,
-               To       => Ship.Destination,
-               Progress =>
+              (Turn       => Athena.Turns.Current_Turn,
+               Ship       => Ship,
+               Empire     => Ship.Empire,
+               Mass       => Mass (Ship),
+               From       => Ship.Star,
+               To         => Ship.Destination,
+               Progress   =>
                  Real'Min ((Travelled + Speed) / Total_Distance, 1.0));
 
             if Speed >= Remaining then
@@ -372,6 +375,10 @@ package body Athena.Ships.Updates is
    begin
 
       Ship.Update_Ship.Set_Experience (XP + 0.01).Done;
+
+      if Ship.Fleet.Has_Element then
+         return;
+      end if;
 
       if Ship.Destination.Has_Element then
          if not Move_Ship (Ship) then
@@ -445,6 +452,129 @@ package body Athena.Ships.Updates is
               .Done;
          end if;
       end;
+   end Update;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update
+     (Fleet : Athena.Handles.Fleet.Fleet_Class)
+   is
+      Origin : constant Athena.Handles.Star.Star_Class :=
+                 Fleet.Location;
+      Destination : constant Athena.Handles.Star.Star_Class :=
+                      Fleet.Destination;
+   begin
+      if not Destination.Has_Element then
+         return;
+      end if;
+
+      if Fleet.Progress = 0.0 then
+         declare
+            use Athena.Handles.Ship.Selections;
+            Slowest   : Non_Negative_Real := Non_Negative_Real'Last;
+            Mass      : Non_Negative_Real := 0.0;
+            Has_Ships : Boolean := False;
+         begin
+            for Ship of Select_Where
+              (Athena.Handles.Ship.Selections.Fleet = Fleet)
+            loop
+               Ship.Update_Ship
+                 .Set_Destination (Fleet.Destination.Reference_Star)
+                 .Done;
+               Has_Ships := True;
+               Mass := Mass + Athena.Ships.Mass (Ship);
+               Slowest := Non_Negative_Real'Min
+                 (Slowest, Speed (Ship));
+            end loop;
+
+            if not Has_Ships then
+               Fleet.Update_Fleet
+                 .Set_Location (Destination.Reference_Star)
+                 .Set_Destination (Athena.Db.Null_Star_Reference)
+                 .Done;
+               return;
+            end if;
+
+            Fleet.Update_Fleet
+              .Set_Speed (Slowest)
+              .Set_Mass (Mass)
+              .Done;
+         end;
+      end if;
+
+      declare
+         Total_Distance : constant Non_Negative_Real :=
+                            Athena.Stars.Distance
+                              (Origin, Destination);
+         Travelled      : constant Non_Negative_Real :=
+                            Total_Distance * Fleet.Progress;
+         Remaining      : constant Non_Negative_Real :=
+                            Total_Distance - Travelled;
+         Speed          : constant Non_Negative_Real := Fleet.Speed;
+      begin
+
+         Athena.Logging.Log
+           (Fleet.Empire.Adjective
+            & " fleet " & Fleet.Name
+            & " moving to "
+            & Destination.Name
+            & ": speed " & Image (Speed)
+            & "; travelled " & Image (Travelled)
+            & "; remaining " & Image (Remaining));
+
+         Athena.Handles.Fleet_Journey.Create
+           (Turn     => Athena.Turns.Current_Turn,
+            Fleet    => Fleet,
+            Empire   => Fleet.Empire,
+            Mass     => Fleet.Mass,
+            From     => Origin,
+            To       => Destination,
+            Progress =>
+              Real'Min ((Travelled + Speed) / Total_Distance, 1.0));
+
+         if Speed >= Remaining then
+            Athena.Logging.Log
+              (Fleet.Empire.Adjective
+               & " fleet " & Fleet.Name
+               & " arrives at " & Destination.Name);
+            Fleet.Update_Fleet
+              .Set_Location (Destination.Reference_Star)
+              .Set_Destination (Athena.Db.Null_Star_Reference)
+              .Set_Progress (0.0)
+              .Set_Speed (0.0)
+              .Done;
+
+         else
+            Fleet.Update_Fleet
+              .Set_Progress ((Travelled + Speed) / Total_Distance)
+              .Done;
+         end if;
+
+         declare
+            use Athena.Handles.Ship.Selections;
+         begin
+            for Ship of Select_Where
+              (Athena.Handles.Ship.Selections.Fleet = Fleet)
+            loop
+               declare
+                  XP             : constant Non_Negative_Real :=
+                                     Ship.Experience;
+                  New_XP         : constant Non_Negative_Real :=
+                                     XP + Real'Min (Speed, Remaining) * 0.001;
+               begin
+                  Ship.Update_Ship
+                    .Set_Star (Fleet.Location.Reference_Star)
+                    .Set_Destination (Fleet.Destination.Reference_Star)
+                    .Set_Progress (Fleet.Progress)
+                    .Set_Experience (New_XP)
+                    .Done;
+               end;
+            end loop;
+         end;
+      end;
+
    end Update;
 
 end Athena.Ships.Updates;

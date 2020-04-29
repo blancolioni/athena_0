@@ -4,9 +4,6 @@ with Athena.Turns;
 
 with Athena.Orders;
 
-with Athena.Logging;
-with Athena.Real_Images;
-
 with Athena.Handles.Fleet;
 with Athena.Handles.Ship;
 with Athena.Handles.Ship_Design;
@@ -15,9 +12,6 @@ with Athena.Handles.Star;
 with Athena.Db.Transport_Order;
 
 package body Athena.Managers.Transportation is
-
-   function Image (X : Real) return String
-                   renames Athena.Real_Images.Approximate_Image;
 
    procedure Get_Transport
      (For_Empire : Athena.Handles.Empire.Empire_Class;
@@ -63,11 +57,10 @@ package body Athena.Managers.Transportation is
                                 Natural (Missing / Cargo);
                begin
                   if Required > 0 then
-                     Athena.Logging.Log
-                       (For_Empire.Name & "/transport: "
-                        & "missing capacity: " & Image (Missing)
-                        & "; transport cargo: " & Image (Cargo)
-                        & "; required transports:" & Required'Image);
+                     Log ("transport", For_Empire,
+                          "missing capacity: " & Image (Missing)
+                          & "; transport cargo: " & Image (Cargo)
+                          & "; required transports:" & Required'Image);
 
                      Athena.Orders.Build_Ships
                        (Empire   => For_Empire,

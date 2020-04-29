@@ -11,6 +11,7 @@ with Athena.Empires;
 with Athena.Technology;
 
 with Athena.Handles.Design_Component.Selections;
+with Athena.Handles.Fleet.Selections;
 with Athena.Handles.Ship_Component.Selections;
 with Athena.Handles.Ship_Order;
 with Athena.Handles.Star_Knowledge.Selections;
@@ -96,7 +97,9 @@ package body Athena.Ships is
       New_Last_Order := New_Last_Order + 1;
 
       Athena.Logging.Log
-        (To.Name
+        (To.Empire.Name
+         & " ship "
+         & To.Name
          & ": order" & New_Last_Order'Image
          & ": "
          & Action'Image
@@ -317,6 +320,22 @@ package body Athena.Ships is
       end loop;
       return Mass;
    end Design_Mass;
+
+   --------------------
+   -- For_All_Fleets --
+   --------------------
+
+   procedure For_All_Fleets
+     (Process : not null access
+        procedure (Fleet : Athena.Handles.Fleet.Fleet_Class))
+   is
+   begin
+      for Fleet of
+        Athena.Handles.Fleet.Selections.Select_All
+      loop
+         Process (Fleet);
+      end loop;
+   end For_All_Fleets;
 
    -------------------
    -- For_All_Ships --
@@ -579,7 +598,7 @@ package body Athena.Ships is
    --------------------------
 
    function Select_Managed_Ships
-     (Managed_By : Athena.Handles.Manager.Manager_Class)
+     (Managed_By : Athena.Handles.Empire_Manager.Empire_Manager_Class)
       return Athena.Handles.Ship.Selections.Selection
    is
       use Athena.Handles.Ship.Selections;

@@ -55,10 +55,6 @@ record Empire_Tec is
     unique key Empire_Tec with Empire, Technology;
 end Empire_Tec;
 
-record Fleet : Has_Identifier, Has_Name is
-    key Empire;
-end Fleet;
-
 record Manager : Localised is
     Priority : Positive;
 end Manager;
@@ -99,6 +95,16 @@ record Star_Knowledge is
     unique key Star_Knowledge with Star, Empire;
 end Star_Knowledge;
     
+record Fleet : Has_Identifier, Has_Name is
+    key Empire;
+    key Manager : Empire_Manager;
+    Location    : Star;
+    Destination : Star;
+    Mass        : Long_Float;
+    Speed       : Long_Float;
+    Progress    : Long_Float;
+end Fleet;
+
 record Colony : Has_Identifier is
     unique key Star;
     key Empire;
@@ -138,6 +144,11 @@ record Research_Order : Order is
     Construct : Long_Float;
 end Research_Order;
 
+record Fleet_Order : Order is
+    Fleet;
+    Destination : Star;
+end Fleet_Order;
+
 type Component_Function_Type is 
   (Drive, Shield, Cargo, Repair, Beam, Missile, Fighter);
 
@@ -171,7 +182,7 @@ record Ship : Has_Identifier, Has_Name is
     key Empire;
     key Star;
     key Fleet;
-    key Manager;
+    key Manager : Empire_Manager;
     key Destination : Star;
     Ship_Design;
     First_Order : Natural;
@@ -180,7 +191,7 @@ record Ship : Has_Identifier, Has_Name is
     Experience  : Long_Float;
     Colonists   : Long_Float;
     Industry    : Long_Float;
-    Material    : Long_FLoat;
+    Material    : Long_Float;
     key Ship_Star with Empire, Star;
     key Ship_Destination with Empire, Destination;
 end Ship;
@@ -215,17 +226,26 @@ end Repair_Order;
 
 record Ship_Build_Order : Order is
     Ship_Design;
-    Manager;
+    Manager  : Empire_Manager;
     Fleet;
-    Send_To      : Star;
+    Send_To  : Star;
 end Ship_Build_Order;
 
-record Ship_Journey is
+record Journey is
     key Turn;
+    Empire;
+    From       : Star;
+    To         : Star;
+    Mass       : Long_Float;
+    Progress   : Long_Float;
+end Journey;
+
+record Ship_Journey : Journey is
     key Ship;
-    From     : Star;
-    To       : Star;
-    Progress : Long_Float;
 end Ship_Journey;
+
+record Fleet_Journey : Journey is
+    key Fleet;
+end Fleet_Journey;
 
 end Athena;

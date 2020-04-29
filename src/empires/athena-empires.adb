@@ -17,7 +17,7 @@ package body Athena.Empires is
    function Get_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class;
       Tag        : String)
-      return Athena.Handles.Manager.Manager_Class;
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class;
 
    --------------------
    -- Add_Investment --
@@ -65,7 +65,7 @@ package body Athena.Empires is
 
    function Attack_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Manager.Manager_Class
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
    is
    begin
       return Get_Manager (For_Empire, "attack");
@@ -171,7 +171,7 @@ package body Athena.Empires is
 
    function Defense_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Manager.Manager_Class
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
    is
    begin
       return Get_Manager (For_Empire, "defend");
@@ -219,7 +219,7 @@ package body Athena.Empires is
 
    function Exploration_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Manager.Manager_Class
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
    is
    begin
       return Get_Manager (For_Empire, "explore");
@@ -232,16 +232,29 @@ package body Athena.Empires is
    function Get_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class;
       Tag        : String)
-      return Athena.Handles.Manager.Manager_Class
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
    is
       use Athena.Handles.Empire_Manager.Selections;
    begin
       for Manager of Select_Where (Empire = For_Empire) loop
          if Manager.Manager.Tag = Tag then
-            return Manager.Manager;
+            return Manager;
          end if;
       end loop;
       raise Constraint_Error with "no such manager: " & Tag;
+   end Get_Manager;
+
+   -----------------
+   -- Get_Manager --
+   -----------------
+
+   function Get_Manager
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      Manager    : Athena.Handles.Manager.Manager_Class)
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
+   is
+   begin
+      return Get_Manager (For_Empire, Manager.Tag);
    end Get_Manager;
 
    ---------
@@ -308,7 +321,7 @@ package body Athena.Empires is
 
    function Transport_Manager
      (For_Empire : Athena.Handles.Empire.Empire_Class)
-      return Athena.Handles.Manager.Manager_Class
+      return Athena.Handles.Empire_Manager.Empire_Manager_Class
    is
    begin
       return Get_Manager (For_Empire, "transport");
