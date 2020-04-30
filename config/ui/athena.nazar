@@ -4,6 +4,7 @@ application (name = Athena theme = Adwaita-dark) = {
      horizontal-box (no-expand) = {
 	    label (name = empire-label text = Empire)
 		label (name = cash-label text = Cash)
+		label (name = debt-label text = Debt)
 	    label (name = turn-label text = Turn pack-end)
 		}
 	 horizontal-box = {

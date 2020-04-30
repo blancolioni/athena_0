@@ -10,6 +10,10 @@ package Athena.UI.Models is
      (Empire : Athena.Handles.Empire.Empire_Class)
      return Nazar.Models.Text.Nazar_Text_Model;
 
+   function Current_Debt_Model
+     (Empire : Athena.Handles.Empire.Empire_Class)
+      return Nazar.Models.Text.Nazar_Text_Model;
+
 private
 
    type Dynamic_Text_Model is

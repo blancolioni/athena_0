@@ -21,6 +21,17 @@ package body Athena.UI.Models is
    is ("Cash "
        & Athena.Money.Show (Model.Empire.Cash));
 
+   type Current_Debt_Model_Record is
+     new Dynamic_Text_Model with
+      record
+         Empire : Athena.Handles.Empire.Empire_Handle;
+      end record;
+
+   overriding function Current_Text
+     (Model : Current_Debt_Model_Record) return String
+   is ("Debt "
+       & Athena.Money.Show (Model.Empire.Debt));
+
    ------------------------
    -- Current_Cash_Model --
    ------------------------
@@ -39,6 +50,25 @@ package body Athena.UI.Models is
          Model.Reload;
       end return;
    end Current_Cash_Model;
+
+   ------------------------
+   -- Current_Debt_Model --
+   ------------------------
+
+   function Current_Debt_Model
+     (Empire : Athena.Handles.Empire.Empire_Class)
+      return Nazar.Models.Text.Nazar_Text_Model
+   is
+   begin
+      return Model : constant Nazar.Models.Text.Nazar_Text_Model :=
+        new Current_Debt_Model_Record'
+          (Nazar.Models.Text.Nazar_Text_Model_Record with
+             Empire => Athena.Handles.Empire.Get (Empire.Reference_Empire))
+      do
+         Model.Set_Text ("");
+         Model.Reload;
+      end return;
+   end Current_Debt_Model;
 
    ------------------------
    -- Current_Turn_Model --

@@ -85,6 +85,14 @@ package body Athena.UI.Nazar_UI is
             Result.Models.Append (Nazar.Models.Nazar_Model (Model));
          end;
 
+         declare
+            Model : constant Nazar.Models.Text.Nazar_Text_Model :=
+                      Athena.UI.Models.Current_Debt_Model (Empire);
+         begin
+            Builder.Get_View ("debt-label").Set_Model (Model);
+            Result.Models.Append (Nazar.Models.Nazar_Model (Model));
+         end;
+
          Nazar.Views.Button.Nazar_Button_View
            (Builder.Get_View ("update"))
              .On_Activate (On_Update_Clicked'Access, Result);
