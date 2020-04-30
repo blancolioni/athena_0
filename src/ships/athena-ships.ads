@@ -37,6 +37,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Athena.Handles.Ship_Component.Ship_Component_Class;
 
+   function Is_Armed
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean;
+
    function Design_Mass
      (Of_Design : Athena.Handles.Ship_Design.Ship_Design_Class)
       return Non_Negative_Real;

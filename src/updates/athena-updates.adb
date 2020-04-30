@@ -316,9 +316,14 @@ package body Athena.Updates is
                   Hostile => False));
          end if;
 
-         if not Star_Map (Key).Hostile then
+         if Athena.Ships.Is_Armed (Ship)
+           and then not Star_Map (Key).Hostile
+         then
             for Other_Ship of Star_Map (Key).Ships loop
-               if Other_Ship.Empire.Identifier /= Ship.Empire.Identifier then
+               if Athena.Ships.Is_Armed (Other_Ship)
+                 and then Other_Ship.Empire.Identifier
+                   /= Ship.Empire.Identifier
+               then
                   Athena.Logging.Log
                     ("encounter: checking treaty between "
                      & Other_Ship.Empire.Name

@@ -395,6 +395,19 @@ package body Athena.Ships is
       end loop;
    end Get_Ships;
 
+   --------------
+   -- Is_Armed --
+   --------------
+
+   function Is_Armed
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean
+   is
+   begin
+      return not Ship_Vector (All_Ships.Element (Ship.Identifier))
+        .Weapons.Is_Empty;
+   end Is_Armed;
+
    ------------------------
    -- Iterate_Components --
    ------------------------
