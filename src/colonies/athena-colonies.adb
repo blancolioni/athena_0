@@ -1,4 +1,5 @@
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with WL.String_Maps;
@@ -12,6 +13,7 @@ with Athena.Empires;
 with Athena.Stars;
 
 with Athena.Handles.Colony.Selections;
+with Athena.Handles.Star_Trade_Good.Selections;
 
 package body Athena.Colonies is
 
@@ -272,6 +274,28 @@ package body Athena.Colonies is
       end if;
       Empire_Colony (Owner.Identifier)
         .Insert (Colony.Identifier, Colony_Vector.Last_Index);
+
+      declare
+         use Ada.Strings.Unbounded;
+         use Athena.Handles.Star_Trade_Good.Selections;
+         Goods : Unbounded_String;
+      begin
+         for Star_Trade_Good of
+           Select_Where (Star = Colony.Star)
+         loop
+            Goods := Goods
+              & "; " & Star_Trade_Good.Trade_Good.Tag
+              & "="
+              & Image (Star_Trade_Good.Value * 1000.0);
+         end loop;
+
+         Log (Colony,
+              "res=" & Image (100.0 * Colony.Star.Resource) & "%"
+              & "; hab=" & Image (100.0 * Colony.Star.Habitability) & "%"
+              & "; space=" & Image (Real (Colony.Star.Space))
+              & To_String (Goods));
+      end;
+
    end New_Colony;
 
    ----------------------

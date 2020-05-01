@@ -75,6 +75,14 @@ record Star : Has_Identifier, Has_Name is
     Habitability      : Long_Float;
 end Star;    
 
+record Trade_Good : Localised;
+
+record Star_Trade_Good is
+    key Star;
+	Trade_Good;
+	key Value : Long_Float;
+end Star_Trade_Good;
+	
 record Empire_Capital is
     unique key Empire;
     key Star;

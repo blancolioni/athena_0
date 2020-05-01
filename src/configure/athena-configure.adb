@@ -12,6 +12,8 @@ with Athena.Real_Images;
 
 with Athena.Db.Star;
 with Athena.Db.Star_Distance;
+with Athena.Db.Trade_Good;
+with Athena.Db.Star_Trade_Good;
 
 with Athena.Handles.Component;
 with Athena.Handles.Manager;
@@ -81,6 +83,9 @@ package body Athena.Configure is
 
       function Create_System_Name return String;
 
+      procedure Create_Trade_Goods
+        (Tag : String);
+
       ------------------------
       -- Create_System_Name --
       ------------------------
@@ -99,6 +104,55 @@ package body Athena.Configure is
             end;
          end loop;
       end Create_System_Name;
+
+      ------------------------
+      -- Create_Trade_Goods --
+      ------------------------
+
+      procedure Create_Trade_Goods
+        (Tag : String)
+      is
+         package Real_Vectors is
+           new Ada.Containers.Vectors (Positive, Real);
+         Ids : Real_Vectors.Vector;
+      begin
+         for I in 1 .. Vector.Length loop
+            Ids.Append (Athena.Random.Unit_Random);
+         end loop;
+
+         for I in 1 .. 4 loop
+            declare
+               Old_Ids : constant Real_Vectors.Vector := Ids;
+            begin
+               Ids.Clear;
+               for I in 1 .. Old_Ids.Last_Index loop
+                  declare
+                     Sum     : Non_Negative_Real := Old_Ids (I);
+                     Count   : Non_Negative_Real := 1.0;
+                  begin
+                     for Nearest of Vector.Element (I).Nearest loop
+                        Sum := Sum
+                          + Old_Ids (Nearest.To) / (1.0 + Nearest.Distance);
+                        Count := Count + 1.0 / (1.0 + Nearest.Distance);
+                     end loop;
+                     Ids.Append (Sum / Count);
+                  end;
+               end loop;
+            end;
+         end loop;
+
+         declare
+            Trade_Good : constant Athena.Db.Trade_Good_Reference :=
+              Athena.Db.Trade_Good.Create (Tag);
+         begin
+            for I in 1 .. Ids.Last_Index loop
+               Athena.Db.Star_Trade_Good.Create
+                 (Star       => Vector.Element (I).Reference,
+                  Trade_Good => Trade_Good,
+                  Value      => Ids (I));
+            end loop;
+         end;
+      end Create_Trade_Goods;
 
    begin
 
@@ -239,6 +293,10 @@ package body Athena.Configure is
 
          end;
       end loop;
+
+      Create_Trade_Goods ("agriculture");
+      Create_Trade_Goods ("mineral");
+      Create_Trade_Goods ("manufacture");
 
       for I in 1 .. Star_Count loop
          declare
