@@ -26,6 +26,10 @@ package Athena.Options is
    Color                   : String;
    Capital                 : String;
    
+   View_Encounter          : Boolean;
+   Star_Name               : String;
+   Turn                    : Natural;
+   
    Auto_Update             : Boolean;
    Update_Interval         : Natural;
    

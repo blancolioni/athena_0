@@ -11,6 +11,11 @@ package Athena.Encounters is
       return Athena.Handles.Encounter.Encounter_Class;
 
    procedure Execute
-     (E : Athena.Handles.Encounter.Encounter_Class);
+     (Encounter : Athena.Handles.Encounter.Encounter_Class);
+
+   function Find
+     (Star_Name   : String;
+      Turn_Number : Positive)
+      return Athena.Handles.Encounter.Encounter_Class;
 
 end Athena.Encounters;

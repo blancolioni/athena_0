@@ -37,6 +37,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Athena.Handles.Ship_Component.Ship_Component_Class;
 
+   function Get_Shield
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class;
+
    function Is_Armed
      (Ship : Athena.Handles.Ship.Ship_Class)
       return Boolean;
@@ -54,6 +58,12 @@ package Athena.Ships is
       Process : not null access
         procedure
           (Component : Athena.Handles.Ship_Component.Ship_Component_Class));
+
+   procedure Iterate_Weapons
+     (On_Ship : Athena.Handles.Ship.Ship_Class;
+      Process : not null access
+        procedure
+          (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class));
 
    package Ship_Lists is
      new Ada.Containers.Doubly_Linked_Lists

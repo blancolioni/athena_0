@@ -379,6 +379,19 @@ package body Athena.Ships is
         .Drive.Component;
    end Get_Drive;
 
+   ----------------
+   -- Get_Shield --
+   ----------------
+
+   function Get_Shield
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class
+   is
+   begin
+      return Ship_Vector (All_Ships.Element (Of_Ship.Identifier))
+        .Shield.Component;
+   end Get_Shield;
+
    ---------------
    -- Get_Ships --
    ---------------
@@ -430,6 +443,24 @@ package body Athena.Ships is
          Process (Component.Component);
       end loop;
    end Iterate_Components;
+
+   ---------------------
+   -- Iterate_Weapons --
+   ---------------------
+
+   procedure Iterate_Weapons
+     (On_Ship : Athena.Handles.Ship.Ship_Class;
+      Process : not null access
+        procedure
+          (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class))
+   is
+      Rec : constant Ship_Record :=
+              Ship_Vector.Element (All_Ships (On_Ship.Identifier));
+   begin
+      for Component of Rec.Weapons loop
+         Process (Component.Component);
+      end loop;
+   end Iterate_Weapons;
 
    ----------
    -- Load --

@@ -261,6 +261,7 @@ end Antagonist;
 record Participant is
     key Encounter;
     Ship;
+    unique key Participant with Encounter, Ship;
 end Participant;
 
 type Ship_Encounter_Action is
@@ -269,7 +270,7 @@ type Ship_Encounter_Action is
 record Encounter_Action is
     key Encounter;
     Participant;
-    Time_Stamp : Long_Float;
+    Time_Stamp : Natural;
     X          : Long_Float;
     Y          : Long_Float;
     Heading    : Long_Float;
@@ -277,6 +278,8 @@ record Encounter_Action is
     Action     : Ship_Encounter_Action;
     Component  : Ship_Component;
     Target     : Participant;
+    key Encounter_Action with Encounter, Time_Stamp;
+    unique key Participant_Action with Encounter, Participant, Time_Stamp;
 end Encounter_Action;
 
 end Athena;

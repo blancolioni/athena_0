@@ -13,6 +13,7 @@ with Nazar.Main;
 with Nazar.Gtk_Main;
 with Nazar.Signals;
 
+with Athena.UI.Models.Encounters;
 with Athena.UI.Models.Galaxy;
 
 with Athena.Updates;
@@ -25,6 +26,20 @@ package body Athena.UI.Nazar_UI is
    package Model_Lists is
      new Ada.Containers.Doubly_Linked_Lists
        (Nazar.Models.Nazar_Model, Nazar.Models."=");
+
+   type Athena_Encounter_UI is
+     new Athena_User_Interface
+     and Nazar.Signals.User_Data_Interface with
+      record
+         Top               : Nazar.Views.Nazar_View;
+         Models            : Model_Lists.List;
+         Encounter_Model   : Nazar.Models.Draw.Nazar_Draw_Model;
+         Encounter_Control : Nazar.Controllers.Draw.
+           Nazar_Draw_Controller_Record;
+      end record;
+
+   overriding procedure Start
+     (UI : in out Athena_Encounter_UI);
 
    type Athena_Nazar_UI is
      new Athena_User_Interface
@@ -41,6 +56,32 @@ package body Athena.UI.Nazar_UI is
 
    procedure On_Update_Clicked
      (User_Data : Nazar.Signals.User_Data_Interface'Class);
+
+   function Get_Encounter_UI
+     (Encounter : Athena.Handles.Encounter.Encounter_Class)
+      return Athena_User_Interface'Class
+   is
+      Builder : constant Nazar.Builder.Nazar_Builder :=
+                  Nazar.Builder.Nazar_Builder_New
+                    (Creator     => Nazar.Builder.Gtk_Creator.Get_Gtk_Creator,
+                     Config_Path =>
+                       Athena.Paths.Config_File ("ui/encounter.nazar"));
+   begin
+      Nazar.Main.Init;
+      return Result : Athena_Encounter_UI do
+         Result.Top := Builder.Get_View ("Athena");
+         Result.Encounter_Model :=
+           Athena.UI.Models.Encounters.Encounter_Model (Encounter);
+         Result.Models.Append
+           (Nazar.Models.Nazar_Model (Result.Encounter_Model));
+
+         Result.Encounter_Control.Start_Draw
+           (Model => Result.Encounter_Model,
+            View  =>
+              Nazar.Views.Draw.Nazar_Draw_View
+                (Builder.Get_View ("encounter")));
+      end return;
+   end Get_Encounter_UI;
 
    ------------
    -- Get_UI --
@@ -128,6 +169,17 @@ package body Athena.UI.Nazar_UI is
 
    overriding procedure Start
      (UI : in out Athena_Nazar_UI)
+   is
+   begin
+      UI.Top.Show;
+   end Start;
+
+   -----------
+   -- Start --
+   -----------
+
+   overriding procedure Start
+     (UI : in out Athena_Encounter_UI)
    is
    begin
       UI.Top.Show;

@@ -2,6 +2,18 @@ with Athena.UI.Nazar_UI;
 
 package body Athena.UI.Launch is
 
+   ----------------------
+   -- Get_Encounter_UI --
+   ----------------------
+
+   function Get_Encounter_UI
+     (Encounter : Athena.Handles.Encounter.Encounter_Class)
+      return Athena_User_Interface'Class
+   is
+   begin
+      return Athena.UI.Nazar_UI.Get_Encounter_UI (Encounter);
+   end Get_Encounter_UI;
+
    ------------
    -- Get_UI --
    ------------

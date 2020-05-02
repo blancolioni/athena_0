@@ -46,6 +46,19 @@ package body Athena.Stars is
       return Sqrt ((From.X - To.X) ** 2 + (From.Y - To.Y) ** 2);
    end Distance;
 
+   ---------------
+   -- Find_Star --
+   ---------------
+
+   function Find_Star
+     (With_Name : String)
+      return Athena.Handles.Star.Star_Class
+   is
+      use Athena.Handles.Star.Selections;
+   begin
+      return First_Where (Name = With_Name);
+   end Find_Star;
+
    ----------------
    -- Get_Colony --
    ----------------

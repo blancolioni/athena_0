@@ -22,6 +22,10 @@ package Athena.Stars is
         procedure (Star : Athena.Handles.Star.Star_Class;
                    Distance : Non_Negative_Real));
 
+   function Find_Star
+     (With_Name : String)
+      return Athena.Handles.Star.Star_Class;
+
    procedure Load_Stars;
 
 end Athena.Stars;

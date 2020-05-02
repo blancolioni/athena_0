@@ -380,7 +380,7 @@ package body Athena.UI.Models.Galaxy is
    end Orbiting_Ships;
 
    ------------
-   -- Redraw --
+   -- Reload --
    ------------
 
    overriding procedure Reload

@@ -11,9 +11,11 @@ with Athena.Real_Images;
 
 with Athena.Server;
 
+with Athena.Encounters;
 with Athena.Updates;
 
 with Athena.Handles.Empire;
+with Athena.Handles.Encounter;
 with Athena.UI.Launch;
 
 with Athena.Db.Database;
@@ -97,6 +99,65 @@ begin
       end;
 
       Athena.Server.Save;
+
+      Athena.Db.Database.Close;
+      Database_Open := False;
+
+      return;
+   end if;
+
+   if Athena.Options.View_Encounter then
+
+      if Athena.Options.Star_Name = "" then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "missing option: --star-name");
+         return;
+      end if;
+
+      if Athena.Options.Turn = 0 then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "missing option: --turn");
+         return;
+      end if;
+
+      Athena.Db.Database.Open;
+      Database_Open := True;
+
+--        declare
+--           Star : constant Athena.Handles.Star.Star_Handle :=
+--                    Athena.Stars.Find_Star (Athena.Options.Star_Name);
+--           Turn : constant Athena.Handles.Turn.Turn_Class :=
+--                    Athena.Turns.Get_Turn (Athena.Options.Turn);
+--
+--        begin
+--           if not Star.Has_Element then
+--              Ada.Text_IO.Put_Line
+--                (Ada.Text_IO.Standard_Error,
+--                 "cannot find star: " & Athena.Options.Star_Name);
+--           elsif not Turn.Has_Element then
+--              Ada.Text_IO.Put_Line
+--                (Ada.Text_IO.Standard_Error,
+--                 "no such turn: " & Athena.Options.Turn'Image);
+--           else
+
+      declare
+         Encounter : constant Athena.Handles.Encounter.Encounter_Class :=
+                       Athena.Encounters.Find
+                         (Athena.Options.Star_Name,
+                          Athena.Options.Turn);
+      begin
+         if Encounter.Has_Element then
+            declare
+               UI : Athena.UI.Athena_User_Interface'Class :=
+                      Athena.UI.Launch.Get_Encounter_UI
+                        (Encounter);
+            begin
+               UI.Start;
+            end;
+         end if;
+      end;
 
       Athena.Db.Database.Close;
       Database_Open := False;
