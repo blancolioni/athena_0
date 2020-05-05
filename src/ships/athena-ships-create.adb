@@ -41,7 +41,8 @@ package body Athena.Ships.Create is
                      Experience  => 0.0,
                      Colonists   => 0.0,
                      Industry    => 0.0,
-                     Material    => 0.0);
+                     Material    => 0.0,
+                     Script      => Design.Default_Script);
    begin
       for Component of Select_Where (Ship_Design = Design) loop
          Athena.Handles.Ship_Component.Create

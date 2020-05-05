@@ -1,3 +1,4 @@
+game-id = test-game-1
 language = en
 randomise = yes
 galaxy-radius-x = 100

@@ -15,7 +15,7 @@ with Athena.Managers;
 
 with Athena.Colonies;
 with Athena.Empires.Create;
-with Athena.Ships;
+with Athena.Ships.Scripts;
 with Athena.Stars;
 
 with Athena.Db.Database;
@@ -175,6 +175,7 @@ package body Athena.Server is
       Athena.Colonies.Load_Colonies;
       Athena.Ships.Load_Ships;
       Athena.Managers.Load_Managers;
+      Athena.Ships.Scripts.Load_Standard_Scripts;
    end Load;
 
    procedure Save is

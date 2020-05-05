@@ -1,2 +1,6 @@
-drive = 10
-cargo = 10
+components = {
+    drive = 10
+    cargo = 10
+}
+
+default-script = escape

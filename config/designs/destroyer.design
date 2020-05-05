@@ -1,3 +1,7 @@
-drive = 20
-shield = 10
-beam = 10
+components = {
+    drive = 20
+    shield = 10
+    beam = 10
+}
+
+default-script = attack

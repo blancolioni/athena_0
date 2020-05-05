@@ -1,51 +1,53 @@
 package Athena.Options is
 
-   Language                : String;
-   
-   Randomise               : Boolean;
-   Random_Seed             : Natural;
-   Generate_Root_Password  : Boolean;
+    Game_Id                 : String;
+    
+    Language                : String;
 
-   Update                  : Boolean;
-   Update_Count            : Natural;
-   
-   Create                  : Boolean;
-   Star_Count              : Natural;   
-   Galaxy_Shape            : String;
-   Galaxy_Radius           : Natural;
-   Galaxy_Radius_X         : Natural;
-   Galaxy_Radius_Y         : Natural;
-   System_X_Deviation      : Natural;
-   System_Y_Deviation      : Natural;
-   Average_Connections     : Positive;
-   
-   Add_Empire              : Boolean;
-   Name                    : String;
-   Adjective               : String;
-   Plural                  : String;
-   Color                   : String;
-   Capital                 : String;
-   
-   View_Encounter          : Boolean;
-   Star_Name               : String;
-   Turn                    : Natural;
-   
-   Auto_Update             : Boolean;
-   Update_Interval         : Natural;
-   
-   Work_Threads            : Positive;
+    Randomise               : Boolean;
+    Random_Seed             : Natural;
+    Generate_Root_Password  : Boolean;
 
-   Enable_Faction_Logging  : Boolean;
-   Enable_Market_Logging   : Boolean;
-   Write_Accounts          : Boolean;
+    Update                  : Boolean;
+    Update_Count            : Natural;
 
-   Realistic_Star_Masses   : Boolean;
-   
-   Log_Folder              : String;
-   Log_Ship_Movement       : Boolean;
-   Log_Trade_Offers        : Boolean;
-   Log_Offer_Ids           : Boolean;
-   
-   Detailed_Logging        : Boolean;
+    Create                  : Boolean;
+    Star_Count              : Natural;   
+    Galaxy_Shape            : String;
+    Galaxy_Radius           : Natural;
+    Galaxy_Radius_X         : Natural;
+    Galaxy_Radius_Y         : Natural;
+    System_X_Deviation      : Natural;
+    System_Y_Deviation      : Natural;
+    Average_Connections     : Positive;
+
+    Add_Empire              : Boolean;
+    Name                    : String;
+    Adjective               : String;
+    Plural                  : String;
+    Color                   : String;
+    Capital                 : String;
+
+    View_Encounter          : Boolean;
+    Star_Name               : String;
+    Turn                    : Natural;
+
+    Auto_Update             : Boolean;
+    Update_Interval         : Natural;
+
+    Work_Threads            : Positive;
+
+    Enable_Faction_Logging  : Boolean;
+    Enable_Market_Logging   : Boolean;
+    Write_Accounts          : Boolean;
+
+    Realistic_Star_Masses   : Boolean;
+
+    Log_Folder              : String;
+    Log_Ship_Movement       : Boolean;
+    Log_Trade_Offers        : Boolean;
+    Log_Offer_Ids           : Boolean;
+
+    Detailed_Logging        : Boolean;
    
 end Athena.Options;

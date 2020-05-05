@@ -21,11 +21,21 @@ with Athena.Updates;
 with Athena.Options;
 with Athena.Paths;
 
+------------------------
+-- Athena.UI.Nazar_UI --
+------------------------
+
+------------------------
+-- Athena.UI.Nazar_UI --
+------------------------
+
 package body Athena.UI.Nazar_UI is
 
    package Model_Lists is
      new Ada.Containers.Doubly_Linked_Lists
        (Nazar.Models.Nazar_Model, Nazar.Models."=");
+
+   Current_Tick : Natural := 0;
 
    type Athena_Encounter_UI is
      new Athena_User_Interface
@@ -34,6 +44,7 @@ package body Athena.UI.Nazar_UI is
          Top               : Nazar.Views.Nazar_View;
          Models            : Model_Lists.List;
          Encounter_Model   : Nazar.Models.Draw.Nazar_Draw_Model;
+         Turn_Model        : Nazar.Models.Text.Nazar_Text_Model;
          Encounter_Control : Nazar.Controllers.Draw.
            Nazar_Draw_Controller_Record;
       end record;
@@ -57,6 +68,13 @@ package body Athena.UI.Nazar_UI is
    procedure On_Update_Clicked
      (User_Data : Nazar.Signals.User_Data_Interface'Class);
 
+   procedure Next_Encounter_Tick
+     (User_Data : Nazar.Signals.User_Data_Interface'Class);
+
+   ----------------------
+   -- Get_Encounter_UI --
+   ----------------------
+
    function Get_Encounter_UI
      (Encounter : Athena.Handles.Encounter.Encounter_Class)
       return Athena_User_Interface'Class
@@ -68,8 +86,15 @@ package body Athena.UI.Nazar_UI is
                        Athena.Paths.Config_File ("ui/encounter.nazar"));
    begin
       Nazar.Main.Init;
+      Current_Tick := 0;
       return Result : Athena_Encounter_UI do
          Result.Top := Builder.Get_View ("Athena");
+
+         Result.Turn_Model :=
+           Nazar.Models.Text.Nazar_Text_Model_New ("turn");
+         Builder.Get_View ("turn-label").Set_Model (Result.Turn_Model);
+         Result.Models.Append (Nazar.Models.Nazar_Model (Result.Turn_Model));
+
          Result.Encounter_Model :=
            Athena.UI.Models.Encounters.Encounter_Model (Encounter);
          Result.Models.Append
@@ -80,6 +105,12 @@ package body Athena.UI.Nazar_UI is
             View  =>
               Nazar.Views.Draw.Nazar_Draw_View
                 (Builder.Get_View ("encounter")));
+
+         Nazar.Gtk_Main.Start_Timer
+           (Timeout   => 0.2,
+            User_Data => Result,
+            Callback  => Next_Encounter_Tick'Access);
+
       end return;
    end Get_Encounter_UI;
 
@@ -147,6 +178,23 @@ package body Athena.UI.Nazar_UI is
 
       end return;
    end Get_UI;
+
+   -------------------------
+   -- Next_Encounter_Tick --
+   -------------------------
+
+   procedure Next_Encounter_Tick
+     (User_Data : Nazar.Signals.User_Data_Interface'Class)
+   is
+      UI : Athena_Encounter_UI'Class renames
+             Athena_Encounter_UI'Class (User_Data);
+   begin
+      Current_Tick := Current_Tick + 1;
+      UI.Turn_Model.Set_Text ("Turn" & Current_Tick'Image);
+      for Model of UI.Models loop
+         Model.Reload;
+      end loop;
+   end Next_Encounter_Tick;
 
    -----------------------
    -- On_Update_Clicked --

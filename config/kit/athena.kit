@@ -15,6 +15,12 @@ type Athena.Money.Price_Type is new Long_Float
         To_String => Image,
         From_String => Value;
 
+type Athena.Trigonometry.Angle is new Long_Float
+   with To_Database => To_Degrees,
+        From_Database => From_Degrees,
+        To_String => Image,
+        From_String => Value;
+
 record Has_Identifier is
     unique key Identifier : Fixed_String (8);
 end Has_Identifier;
@@ -159,6 +165,7 @@ end Component;
 
 record Ship_Design : Has_Identifier, Has_Name is
     key Empire;
+    Default_Script : String (16);
 end Ship_Design;
 
 record System_Designs is
@@ -192,6 +199,7 @@ record Ship : Has_Identifier, Has_Name is
     Colonists   : Long_Float;
     Industry    : Long_Float;
     Material    : Long_Float;
+    Script      : String (16);
     key Ship_Star with Empire, Star;
     key Ship_Destination with Empire, Destination;
 end Ship;
@@ -248,7 +256,7 @@ record Fleet_Journey : Journey is
     key Fleet;
 end Fleet_Journey;
 
-record Encounter is
+record Encounter : Has_Identifier is
     key Turn;
     key Star;
 end Encounter;
@@ -263,23 +271,5 @@ record Participant is
     Ship;
     unique key Participant with Encounter, Ship;
 end Participant;
-
-type Ship_Encounter_Action is
-    (No_Action, Fire_Weapon, Explode);
-
-record Encounter_Action is
-    key Encounter;
-    Participant;
-    Time_Stamp : Natural;
-    X          : Long_Float;
-    Y          : Long_Float;
-    Heading    : Long_Float;
-    Shield     : Long_Float;
-    Action     : Ship_Encounter_Action;
-    Component  : Ship_Component;
-    Target     : Participant;
-    key Encounter_Action with Encounter, Time_Stamp;
-    unique key Participant_Action with Encounter, Participant, Time_Stamp;
-end Encounter_Action;
 
 end Athena;

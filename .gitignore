@@ -22,6 +22,7 @@ config/delauny.txt
 
 # Log file
 log
+games
 options.txt
 gmon.out
 gprof.txt

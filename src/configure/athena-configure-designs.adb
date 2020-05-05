@@ -31,9 +31,10 @@ package body Athena.Configure.Designs is
              Athena.Identifiers.Next_Identifier;
       Design : constant Athena.Handles.Ship_Design.Ship_Design_Handle :=
                  Athena.Handles.Ship_Design.Create
-                   (Identifier => Id,
-                    Name       => To_Name (Name),
-                    Empire     => Empire);
+                   (Identifier     => Id,
+                    Name           => To_Name (Name),
+                    Empire         => Empire,
+                    Default_Script => Config.Get ("default-script", "escape"));
 
       function Get_Component
         (T : String)
@@ -71,7 +72,7 @@ package body Athena.Configure.Designs is
       end Get_Component;
 
    begin
-      for Component_Config of Config loop
+      for Component_Config of Config.Child ("components") loop
          Create_Component (Component_Config);
       end loop;
 

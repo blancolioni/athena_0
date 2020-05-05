@@ -12,7 +12,7 @@ with Athena.Orders.Ships;
 with Athena.Empires;
 with Athena.Ships.Updates;
 
-with Athena.Encounters;
+with Athena.Encounters.Manager;
 with Athena.Treaties;
 
 with Athena.Db.Colony_Order;
@@ -346,9 +346,8 @@ package body Athena.Updates is
 
       for Element of Star_Map loop
          if Element.Hostile then
-            Athena.Encounters.Execute
-              (Athena.Encounters.Create
-                 (Element.Star, Element.Ships));
+            Athena.Encounters.Manager.Resolve_Encounter
+              (Element.Star, Element.Ships);
          end if;
       end loop;
 
