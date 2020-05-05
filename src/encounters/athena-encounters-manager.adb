@@ -4,6 +4,7 @@ with Ada.Streams.Stream_IO;
 
 with WL.String_Sets;
 
+with Athena.Logging;
 with Athena.Options;
 with Athena.Paths;
 
@@ -151,6 +152,9 @@ package body Athena.Encounters.Manager is
       Antagonists : WL.String_Sets.Set;
 
    begin
+      Athena.Logging.Log
+        ("Resolving the Battle of " & Star.Name);
+
       for Ship of Ships loop
          Athena.Handles.Participant.Create
            (Encounter => Encounter,

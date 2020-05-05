@@ -24,6 +24,12 @@ package Athena.Encounters.Situation is
       return Athena.Trigonometry.Angle
       is abstract;
 
+   function Get
+     (Situation : Situation_Interface;
+      Index     : Encounter_Actor_Reference)
+      return Situation_Actor
+   is abstract;
+
    procedure Iterate_Hostiles
      (Situation : Situation_Interface;
       Process   : not null access
@@ -41,5 +47,13 @@ package Athena.Encounters.Situation is
       Weapon    : Athena.Handles.Ship_Component.Ship_Component_Class;
       Target    : Positive)
    is abstract;
+
+   function Hostile_Centre
+     (Situation : Situation_Interface'Class)
+      return Encounter_Point;
+
+   function Allied_Centre
+     (Situation : Situation_Interface'Class)
+      return Encounter_Point;
 
 end Athena.Encounters.Situation;

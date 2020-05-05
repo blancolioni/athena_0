@@ -1,5 +1,5 @@
 components = {
-    drive = 30
+    drive = 20
     shield = 10
     beam = 10
     missile = 10

@@ -72,6 +72,10 @@ package body Athena.Encounters.Actors.Ships is
          Have_Destination    => False,
          Target_Heading      => Heading,
          Have_Target_Heading => False,
+         Follow              => 1,
+         Follow_Range        => 0.0,
+         Follow_Bearing      => Athena.Trigonometry.From_Degrees (0.0),
+         Is_Following        => False,
          Speed               => 0.0,
          Owner               =>
            Athena.Handles.Empire.Get (Ship.Empire.Reference_Empire),

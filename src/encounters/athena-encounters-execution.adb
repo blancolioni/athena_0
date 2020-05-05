@@ -5,7 +5,6 @@ with WL.String_Maps;
 
 with Athena.Logging;
 with Athena.Random;
-with Athena.Real_Images;
 
 with Athena.Encounters.Scripts;
 with Athena.Encounters.Situation;
@@ -21,10 +20,6 @@ with Athena.Handles.Ship;
 with Athena.Handles.Ship_Component;
 
 package body Athena.Encounters.Execution is
-
-   function Image (X : Real) return String
-                   renames Athena.Real_Images.Approximate_Image
-     with Unreferenced;
 
    procedure Log (Actor : Athena.Encounters.Actors.Actor_Type);
 
@@ -87,6 +82,11 @@ package body Athena.Encounters.Execution is
       return Athena.Trigonometry.Angle
    is (Situation.Actor.Heading);
 
+   overriding function Get
+     (Situation : Situation_Type;
+      Actor     : Encounter_Actor_Reference)
+      return Athena.Encounters.Situation.Situation_Actor;
+
    overriding procedure Iterate_Hostiles
      (Situation : Situation_Type;
       Process   : not null access
@@ -110,6 +110,20 @@ package body Athena.Encounters.Execution is
         return Boolean;
       Process   : not null access
         procedure (Actor : Athena.Encounters.Situation.Situation_Actor));
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get
+     (Situation : Situation_Type;
+      Actor     : Encounter_Actor_Reference)
+      return Athena.Encounters.Situation.Situation_Actor
+   is
+   begin
+      return Situation.State.Actors.Element (Actor)
+        .Current_Situation (Situation);
+   end Get;
 
    --------------------
    -- Iterate_Actors --
@@ -273,7 +287,14 @@ package body Athena.Encounters.Execution is
          for Team of State.Teams loop
             Athena.Logging.Log ("   team: " & Team.Empire.Name);
             for Ship of Team.Ships loop
-               Athena.Logging.Log ("        " & Ship.Name);
+               Athena.Logging.Log
+                 ("        " & Ship.Name
+                  & ": mass " & Image (Athena.Ships.Mass (Ship))
+                  & "; drive mass "
+                  & Image (Athena.Ships.Get_Drive (Ship).Design_Component.Mass)
+                  & " tec "
+                  & Image (Athena.Ships.Get_Drive (Ship).Tec_Level)
+                  & "; speed " & Image (Athena.Ships.Speed (Ship)));
             end loop;
             Deploy (Team, Current_Angle);
             Current_Angle := Current_Angle + Angular_Sep;
@@ -333,7 +354,9 @@ package body Athena.Encounters.Execution is
          Actor.Update;
       end loop;
 
-      Log (State.Actors.First_Element);
+      if False then
+         Log (State.Actors.First_Element);
+      end if;
 
       declare
          Frame : Athena.Encounters.Frames.Encounter_Frame;

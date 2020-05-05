@@ -43,6 +43,25 @@ package Athena.Encounters.Actors is
      (Actor  : in out Root_Actor_Type;
       DX, DY : Real);
 
+   function Is_Following
+     (Actor : Root_Actor_Type)
+      return Boolean;
+
+   function Following_Actor
+     (Follower : Root_Actor_Type)
+      return Encounter_Actor_Reference
+     with Pre => Is_Following (Follower);
+
+   procedure Follow
+     (Actor     : in out Root_Actor_Type;
+      Target    : Athena.Encounters.Situation.Situation_Actor;
+      Bearing   : Athena.Trigonometry.Angle;
+      Min_Range : Non_Negative_Real);
+
+   procedure Update_Follow_Destination
+     (Actor     : in out Root_Actor_Type;
+      Following : Athena.Encounters.Situation.Situation_Actor);
+
    function Create_Ship_Actor
      (Index   : Encounter_Actor_Reference;
       Ship    : Athena.Handles.Ship.Ship_Class;
@@ -63,6 +82,10 @@ private
          Destination         : Encounter_Point;
          Target_Heading      : Athena.Trigonometry.Angle;
          Have_Target_Heading : Boolean;
+         Follow              : Encounter_Actor_Reference;
+         Follow_Range        : Non_Negative_Real;
+         Follow_Bearing      : Athena.Trigonometry.Angle;
+         Is_Following        : Boolean;
          Speed               : Non_Negative_Real;
          Owner               : Athena.Handles.Empire.Empire_Handle;
          Ship                : Athena.Handles.Ship.Ship_Handle;
@@ -100,5 +123,15 @@ private
      (Actor : Root_Actor_Type)
       return Athena.Trigonometry.Angle
    is (Actor.Heading);
+
+   function Is_Following
+     (Actor : Root_Actor_Type)
+      return Boolean
+   is (Actor.Is_Following);
+
+   function Following_Actor
+     (Follower : Root_Actor_Type)
+      return Encounter_Actor_Reference
+   is (Follower.Follow);
 
 end Athena.Encounters.Actors;

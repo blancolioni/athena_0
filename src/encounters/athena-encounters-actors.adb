@@ -1,4 +1,5 @@
 with Athena.Elementary_Functions;
+--  with Athena.Logging;
 
 with Athena.Encounters.Actors.Ships;
 
@@ -47,6 +48,23 @@ package body Athena.Encounters.Actors is
          Speed   => Actor.Speed);
    end Current_Situation;
 
+   ------------
+   -- Follow --
+   ------------
+
+   procedure Follow
+     (Actor     : in out Root_Actor_Type;
+      Target    : Athena.Encounters.Situation.Situation_Actor;
+      Bearing   : Athena.Trigonometry.Angle;
+      Min_Range : Non_Negative_Real)
+   is
+   begin
+      Actor.Is_Following := True;
+      Actor.Follow := Target.Index;
+      Actor.Follow_Bearing := Bearing;
+      Actor.Follow_Range := Min_Range;
+   end Follow;
+
    -----------
    -- Owner --
    -----------
@@ -92,10 +110,10 @@ package body Athena.Encounters.Actors is
             Distance  : constant Non_Negative_Real :=
                           Athena.Elementary_Functions.Sqrt
                             (DX ** 2 + DY ** 2);
+            Target_Heading : constant Athena.Trigonometry.Angle :=
+                               Athena.Trigonometry.Arctan (DY, DX);
             Bearing   : constant Athena.Trigonometry.Angle :=
-                          Athena.Trigonometry.Arctan
-                            (DY, DX)
-                            - Actor.Heading;
+                            Target_Heading - Actor.Heading;
             Turn      : constant Non_Negative_Real := Speed / 5.0;
             Accel     : constant Non_Negative_Real := Speed / 10.0;
             Stop_Time : constant Non_Negative_Real :=
@@ -108,8 +126,13 @@ package body Athena.Encounters.Actors is
          begin
             if Bearing /= From_Degrees (0.0) then
 
+--                 Athena.Logging.Log
+--                   (Root_Actor_Type'Class (Actor).Image & "; bearing "
+--                    & Image (To_Degrees (Bearing))
+--                    & "; turn " & Image (Turn));
+
                if abs Bearing < From_Degrees (Turn) then
-                  Actor.Heading := Bearing;
+                  Actor.Heading := Target_Heading;
                else
                   Actor.Heading := Actor.Heading
                     + Bearing *
@@ -132,5 +155,20 @@ package body Athena.Encounters.Actors is
          end;
       end if;
    end Update;
+
+   -------------------------------
+   -- Update_Follow_Destination --
+   -------------------------------
+
+   procedure Update_Follow_Destination
+     (Actor     : in out Root_Actor_Type;
+      Following : Athena.Encounters.Situation.Situation_Actor)
+   is
+      use Athena.Trigonometry;
+   begin
+      Actor.Set_Destination
+        (Following.DX + Actor.Follow_Range * Cos (Actor.Follow_Bearing),
+         Following.DY + Actor.Follow_Range * Sin (Actor.Follow_Bearing));
+   end Update_Follow_Destination;
 
 end Athena.Encounters.Actors;

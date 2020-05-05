@@ -1,5 +1,6 @@
 with WL.String_Maps;
 
+with Athena.Ships.Attack;
 with Athena.Ships.Escape;
 
 package body Athena.Ships.Scripts is
@@ -34,6 +35,7 @@ package body Athena.Ships.Scripts is
    procedure Load_Standard_Scripts is
    begin
       Script_Map.Insert ("escape", Athena.Ships.Escape.Escape_Script);
+      Script_Map.Insert ("attack", Athena.Ships.Attack.Attack_Script);
    end Load_Standard_Scripts;
 
    --------------
