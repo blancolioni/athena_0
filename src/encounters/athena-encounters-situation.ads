@@ -45,8 +45,13 @@ package Athena.Encounters.Situation is
    procedure Fire_Weapon
      (Situation : in out Situation_Interface;
       Weapon    : Athena.Handles.Ship_Component.Ship_Component_Class;
-      Target    : Positive)
+      Target    : Encounter_Actor_Reference)
    is abstract;
+
+   function Get_Range
+     (Situation : Situation_Interface'Class;
+      To_Actor  : Encounter_Actor_Reference)
+      return Non_Negative_Real;
 
    function Hostile_Centre
      (Situation : Situation_Interface'Class)

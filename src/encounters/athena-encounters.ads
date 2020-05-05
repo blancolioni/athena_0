@@ -3,6 +3,7 @@ private with Athena.Real_Images;
 with Athena.Trigonometry;
 
 with Athena.Handles.Encounter;
+with Athena.Handles.Ship_Component;
 
 package Athena.Encounters is
 
@@ -38,6 +39,17 @@ package Athena.Encounters is
      (Star_Name   : String;
       Turn_Number : Positive)
       return Athena.Handles.Encounter.Encounter_Class;
+
+   function Hit_Chance
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target_Mass  : Non_Negative_Real;
+      Target_Range : Non_Negative_Real)
+      return Unit_Real;
+
+   function Hit_Power
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target_Range : Non_Negative_Real)
+      return Unit_Real;
 
 private
 

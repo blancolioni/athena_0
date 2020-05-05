@@ -5,6 +5,7 @@ with Athena.Encounters.Sprites;
 
 with Athena.Handles.Empire;
 with Athena.Handles.Ship;
+with Athena.Handles.Ship_Component;
 
 package Athena.Encounters.Actors is
 
@@ -18,6 +19,24 @@ package Athena.Encounters.Actors is
      (Actor : Root_Actor_Type)
       return Athena.Encounters.Sprites.Sprite_Type
       is abstract;
+
+   procedure Iterate_Beam_Weapons
+     (Actor : Root_Actor_Type;
+      Process : not null access
+        procedure (Component : Athena.Handles.Ship_Component
+                   .Ship_Component_Class;
+                   Charge    : Unit_Real))
+   is null;
+
+   procedure Weapon_Fired
+     (Actor : in out Root_Actor_Type;
+      Weapon : Athena.Handles.Ship_Component.Ship_Component_Class)
+   is null;
+
+   function Is_Active
+     (Actor : Root_Actor_Type;
+      Tick  : Encounter_Tick)
+      return Boolean;
 
    function Current_Situation
      (Actor     : Root_Actor_Type;
@@ -62,11 +81,24 @@ package Athena.Encounters.Actors is
      (Actor     : in out Root_Actor_Type;
       Following : Athena.Encounters.Situation.Situation_Actor);
 
+   procedure Destroy_Actor
+     (Actor : in out Root_Actor_Type;
+      Tick  : Encounter_Tick);
+
    function Create_Ship_Actor
      (Index   : Encounter_Actor_Reference;
+      Tick    : Encounter_Tick;
       Ship    : Athena.Handles.Ship.Ship_Class;
       X, Y    : Real;
       Heading : Athena.Trigonometry.Angle)
+      return Actor_Type;
+
+   function Create_Beam_Actor
+     (Index   : Encounter_Actor_Reference;
+      Tick    : Encounter_Tick;
+      Ship    : Athena.Handles.Ship.Ship_Class;
+      Source  : Encounter_Point;
+      Target  : Encounter_Point)
       return Actor_Type;
 
 private
@@ -89,7 +121,8 @@ private
          Speed               : Non_Negative_Real;
          Owner               : Athena.Handles.Empire.Empire_Handle;
          Ship                : Athena.Handles.Ship.Ship_Handle;
-         Start_Tick          : Encounter_Tick;
+         First_Tick          : Encounter_Tick;
+         Last_Tick           : Encounter_Tick;
 
 --           case Class is
 --              when Ship_Actor =>
@@ -113,6 +146,12 @@ private
 --
 --           end case;
       end record;
+
+   function Is_Active
+     (Actor : Root_Actor_Type;
+      Tick  : Encounter_Tick)
+      return Boolean
+   is (Tick >= Actor.First_Tick and then Tick <= Actor.Last_Tick);
 
    function Location
      (Actor : Root_Actor_Type)

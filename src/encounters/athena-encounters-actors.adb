@@ -2,10 +2,28 @@ with Athena.Elementary_Functions;
 --  with Athena.Logging;
 
 with Athena.Encounters.Actors.Ships;
+with Athena.Encounters.Actors.Weapons;
 
 with Athena.Ships;
 
 package body Athena.Encounters.Actors is
+
+   -----------------------
+   -- Create_Beam_Actor --
+   -----------------------
+
+   function Create_Beam_Actor
+     (Index   : Encounter_Actor_Reference;
+      Tick    : Encounter_Tick;
+      Ship    : Athena.Handles.Ship.Ship_Class;
+      Source  : Encounter_Point;
+      Target  : Encounter_Point)
+      return Actor_Type
+   is
+   begin
+      return Athena.Encounters.Actors.Weapons.Create_Beam_Actor
+        (Index, Tick, Ship, Source, Target);
+   end Create_Beam_Actor;
 
    -----------------------
    -- Create_Ship_Actor --
@@ -13,6 +31,7 @@ package body Athena.Encounters.Actors is
 
    function Create_Ship_Actor
      (Index   : Encounter_Actor_Reference;
+      Tick    : Encounter_Tick;
       Ship    : Athena.Handles.Ship.Ship_Class;
       X, Y    : Real;
       Heading : Athena.Trigonometry.Angle)
@@ -21,6 +40,7 @@ package body Athena.Encounters.Actors is
    begin
       return Athena.Encounters.Actors.Ships.Create_Actor
         (Index   => Index,
+         Tick    => Tick,
          Ship    => Ship,
          X       => X,
          Y       => Y,
@@ -47,6 +67,18 @@ package body Athena.Encounters.Actors is
          Heading => Actor.Heading - Situation.Heading,
          Speed   => Actor.Speed);
    end Current_Situation;
+
+   -------------------
+   -- Destroy_Actor --
+   -------------------
+
+   procedure Destroy_Actor
+     (Actor : in out Root_Actor_Type;
+      Tick  : Encounter_Tick)
+   is
+   begin
+      Actor.Last_Tick := Tick;
+   end Destroy_Actor;
 
    ------------
    -- Follow --

@@ -49,7 +49,7 @@ package body Athena.Encounters.Execution is
          Actors    : Actor_Vectors.Vector;
          Scripts   : Script_Vectors.Vector;
          Teams     : Team_Maps.Map;
-         Tick      : Natural;
+         Tick      : Encounter_Tick;
          Victor    : Athena.Handles.Empire.Empire_Handle;
          Finished  : Boolean;
       end record;
@@ -68,8 +68,10 @@ package body Athena.Encounters.Execution is
    type Situation_Type is
      new Athena.Encounters.Situation.Situation_Interface with
       record
-         State : State_Type;
-         Actor : Athena.Encounters.Actors.Actor_Type;
+         State       : State_Type;
+         Actor       : Athena.Encounters.Actors.Actor_Type;
+         New_Actors  : Actor_Vectors.Vector;
+         New_Scripts : Script_Vectors.Vector;
       end record;
 
    overriding function Origin
@@ -100,8 +102,7 @@ package body Athena.Encounters.Execution is
    overriding procedure Fire_Weapon
      (Situation : in out Situation_Type;
       Weapon    : Athena.Handles.Ship_Component.Ship_Component_Class;
-      Target    : Positive)
-   is null;
+      Target    : Encounter_Actor_Reference);
 
    procedure Iterate_Actors
      (Situation : Situation_Type'Class;
@@ -110,6 +111,32 @@ package body Athena.Encounters.Execution is
         return Boolean;
       Process   : not null access
         procedure (Actor : Athena.Encounters.Situation.Situation_Actor));
+
+   -----------------
+   -- Fire_Weapon --
+   -----------------
+
+   overriding procedure Fire_Weapon
+     (Situation : in out Situation_Type;
+      Weapon    : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target    : Encounter_Actor_Reference)
+   is
+      Actor : constant Athena.Encounters.Actors.Actor_Type :=
+                Situation.State.Actors.Element (Target);
+      Beam : constant Athena.Encounters.Actors.Actor_Type :=
+               Athena.Encounters.Actors.Create_Beam_Actor
+                 (Situation.State.Actors.Last_Index,
+                  Situation.State.Tick,
+                  Weapon.Ship, Situation.Actor.Location,
+                  Actor.Location);
+   begin
+      Situation.New_Actors.Append (Beam);
+      Situation.New_Scripts.Append (Athena.Encounters.Scripts.Beam_Script);
+      Situation.Actor.Weapon_Fired (Weapon);
+      Athena.Logging.Log
+        (Weapon.Ship.Name & " fires at "
+           & Actor.Image);
+   end Fire_Weapon;
 
    ---------
    -- Get --
@@ -157,7 +184,8 @@ package body Athena.Encounters.Execution is
       function Is_Ally
         (Actor : Athena.Encounters.Actors.Actor_Type)
          return Boolean
-      is (Actor.Owner.Identifier = Situation.Actor.Owner.Identifier);
+      is (Actor.Is_Active (Situation.State.Tick)
+          and then Actor.Owner.Identifier = Situation.Actor.Owner.Identifier);
    begin
       Situation.Iterate_Actors (Is_Ally'Access, Process);
    end Iterate_Allies;
@@ -174,7 +202,8 @@ package body Athena.Encounters.Execution is
       function Is_Hostile
         (Actor : Athena.Encounters.Actors.Actor_Type)
          return Boolean
-      is (Actor.Owner.Identifier /= Situation.Actor.Owner.Identifier);
+      is (Actor.Is_Active (Situation.State.Tick)
+          and then Actor.Owner.Identifier /= Situation.Actor.Owner.Identifier);
    begin
       Situation.Iterate_Actors (Is_Hostile'Access, Process);
    end Iterate_Hostiles;
@@ -237,9 +266,10 @@ package body Athena.Encounters.Execution is
             State.Actors.Append
               (Athena.Encounters.Actors.Create_Ship_Actor
                  (Index   => State.Actors.Last_Index + 1,
+                  Tick    => 0,
                   Ship    => Ship,
-                  X       => X + Normal_Random (Encounter_Radius / 10.0),
-                  Y       => Y + Normal_Random (Encounter_Radius / 10.0),
+                  X       => X + Normal_Random (Encounter_Radius / 20.0),
+                  Y       => Y + Normal_Random (Encounter_Radius / 20.0),
                   Heading => Bearing + From_Degrees (180.0)));
             State.Scripts.Append
               (Athena.Ships.Scripts.Get_Script
@@ -339,19 +369,31 @@ package body Athena.Encounters.Execution is
    is
    begin
       for Index in 1 .. State.Scripts.Last_Index loop
-         declare
-            Situation : Situation_Type :=
-                          Situation_Type'
-                            (State => State,
-                             Actor => State.Actors (Index));
-         begin
-            State.Scripts.Element (Index).Update
-              (State.Actors (Index), Situation);
-         end;
+         if State.Actors.Element (Index).Is_Active (State.Tick) then
+            declare
+               Situation : Situation_Type :=
+                             Situation_Type'
+                               (State       => State,
+                                Actor       => State.Actors (Index),
+                                New_Actors  => <>,
+                                New_Scripts => <>);
+            begin
+               State.Scripts.Element (Index).Update
+                 (State.Actors (Index), Situation);
+               for Actor of Situation.New_Actors loop
+                  State.Actors.Append (Actor);
+               end loop;
+               for Script of Situation.New_Scripts loop
+                  State.Scripts.Append (Script);
+               end loop;
+            end;
+         end if;
       end loop;
 
       for Actor of State.Actors loop
-         Actor.Update;
+         if Actor.Is_Active (State.Tick) then
+            Actor.Update;
+         end if;
       end loop;
 
       if False then
@@ -362,8 +404,10 @@ package body Athena.Encounters.Execution is
          Frame : Athena.Encounters.Frames.Encounter_Frame;
       begin
          for Actor of State.Actors loop
-            Athena.Encounters.Frames.Add_Sprite
-              (Frame, Actor.Current_Sprite);
+            if Actor.Is_Active (State.Tick) then
+               Athena.Encounters.Frames.Add_Sprite
+                 (Frame, Actor.Current_Sprite);
+            end if;
          end loop;
          Manager.Add_Frame (Frame);
       end;

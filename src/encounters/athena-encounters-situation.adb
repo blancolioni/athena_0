@@ -1,3 +1,5 @@
+with Athena.Elementary_Functions;
+
 package body Athena.Encounters.Situation is
 
    -------------------
@@ -31,6 +33,21 @@ package body Athena.Encounters.Situation is
       Situation.Iterate_Allies (Add_Ally'Access);
       return (Sum_X / Total_Mass, Sum_Y / Total_Mass);
    end Allied_Centre;
+
+   ---------------
+   -- Get_Range --
+   ---------------
+
+   function Get_Range
+     (Situation : Situation_Interface'Class;
+      To_Actor  : Encounter_Actor_Reference)
+      return Non_Negative_Real
+   is
+      A : constant Situation_Actor := Situation.Get (To_Actor);
+   begin
+      return Athena.Elementary_Functions.Sqrt
+        (A.DX ** 2 + A.DY ** 2);
+   end Get_Range;
 
    --------------------
    -- Hostile_Centre --

@@ -1,3 +1,7 @@
+with Ada.Numerics;
+
+with Athena.Elementary_Functions;
+
 with Athena.Handles.Encounter.Selections;
 with Athena.Handles.Star.Selections;
 with Athena.Handles.Turn.Selections;
@@ -37,6 +41,58 @@ package body Athena.Encounters is
       end if;
    end Find;
 
+   function Hit_Chance
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target_Mass  : Non_Negative_Real;
+      Target_Range : Non_Negative_Real)
+      return Unit_Real
+   is
+      use Athena.Elementary_Functions;
+      Pi : constant := Ada.Numerics.Pi;
+--        Mass      : constant Non_Negative_Real :=
+--                      Weapon.Design_Component.Mass;
+--        Tec_Level : constant Non_Negative_Real :=
+--                      Weapon.Tec_Level;
+--        Condition : constant Unit_Real :=
+--                      Weapon.Condition;
+--        Max_Range : constant Non_Negative_Real :=
+--                      Athena.Elementary_Functions.Sqrt (Mass)
+--                      * 10.0 * Tec_Level * Condition;
+      Target_R  : constant Non_Negative_Real :=
+                    (3.0 * Target_Mass / 4.0 / Pi) ** (1.0 / 3.0);
+      Target_A  : constant Non_Negative_Real :=
+                    Pi * Target_R ** 2;
+      P_Hit     : constant Non_Negative_Real :=
+                    (1.0 + Weapon.Ship.Experience)
+                    * 100.0 * Target_A / Target_Range;
+   begin
+      return Unit_Clamp (P_Hit);
+   end Hit_Chance;
+
+   ---------------
+   -- Hit_Power --
+   ---------------
+
+   function Hit_Power
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target_Range : Non_Negative_Real)
+      return Unit_Real
+   is
+      Mass      : constant Non_Negative_Real :=
+                    Weapon.Design_Component.Mass;
+      Tec_Level : constant Non_Negative_Real :=
+                    Weapon.Tec_Level;
+      Condition : constant Unit_Real :=
+                    Weapon.Condition;
+      Max_Range : constant Non_Negative_Real :=
+                    Athena.Elementary_Functions.Sqrt (Mass)
+                    * 10.0 * Tec_Level * Condition;
+      Power     : constant Non_Negative_Real :=
+                    Mass * Condition * Tec_Level
+                      * (1.0 - Target_Range / Max_Range);
+   begin
+      return Power;
+   end Hit_Power;
    ------------
    -- Rotate --
    ------------
