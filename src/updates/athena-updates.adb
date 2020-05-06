@@ -306,6 +306,11 @@ package body Athena.Updates is
       procedure Record_Ship (Ship : Athena.Handles.Ship.Ship_Class) is
          Key : constant String := Ship.Star.Identifier;
       begin
+
+         if not Ship.Alive then
+            return;
+         end if;
+
          if not Star_Map.Contains (Key) then
             Star_Map.Insert
               (Key,

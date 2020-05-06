@@ -92,7 +92,8 @@ package body Athena.Encounters.Manager is
    is
    begin
       Athena.Encounters.Frames.Iterate_Frame
-        (Manager.Frames (Tick), Process);
+        (Manager.Frames (Encounter_Tick'Min (Tick, Manager.Frames.Last_Index)),
+         Process);
    end Iterate_Frame;
 
    --------------------

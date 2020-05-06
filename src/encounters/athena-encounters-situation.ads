@@ -6,7 +6,9 @@ package Athena.Encounters.Situation is
       record
          Index   : Encounter_Actor_Reference;
          Class   : Encounter_Actor_Class;
+         Dead    : Boolean;
          Mass    : Non_Negative_Real;
+         Size    : Non_Negative_Real;
          DX, DY  : Real;
          Heading : Athena.Trigonometry.Angle;
          Speed   : Real;

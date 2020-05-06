@@ -58,13 +58,18 @@ package body Athena.Ships.Escape is
    begin
       Situation.Iterate_Hostiles (Add_Hostile'Access);
 
-      declare
-         Bad_X : constant Real := Sum_X / Total_Mass;
-         Bad_Y : constant Real := Sum_Y / Total_Mass;
-      begin
-         Actor.Set_Destination
-           (-Bad_X * 10.0, -Bad_Y * 10.0);
-      end;
+      if Total_Mass > 0.0 then
+         declare
+            Bad_X : constant Real := Sum_X / Total_Mass;
+            Bad_Y : constant Real := Sum_Y / Total_Mass;
+         begin
+            Actor.Set_Destination
+              (-Bad_X * 10.0, -Bad_Y * 10.0);
+         end;
+      else
+         Actor.Clear_Destination;
+      end if;
+
    end Update;
 
 end Athena.Ships.Escape;

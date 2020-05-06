@@ -34,6 +34,7 @@ package body Athena.Ships.Create is
                      Fleet       => Fleet,
                      Manager     => Manager,
                      Name        => Name,
+                     Alive       => True,
                      Destination => Destination,
                      First_Order => 0,
                      Last_Order  => 0,
@@ -51,6 +52,7 @@ package body Athena.Ships.Create is
             Component        => Component.Component,
             Design_Component => Component,
             Condition        => 1.0,
+            Damage           => 0.0,
             Tec_Level        =>
               Athena.Empires.Current_Tec_Level
                 (Empire, Component.Component.Technology));

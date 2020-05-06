@@ -321,6 +321,20 @@ package body Athena.Ships is
       return Mass;
    end Design_Mass;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Ship : Athena.Handles.Ship.Ship_Class) is
+   begin
+      Ship.Update_Ship
+        .Set_Fleet (Athena.Db.Null_Fleet_Reference)
+        .Set_Destination (Athena.Db.Null_Star_Reference)
+        .Set_Manager (Athena.Db.Null_Empire_Manager_Reference)
+        .Set_Alive (False)
+        .Done;
+   end Destroy;
+
    --------------------
    -- For_All_Fleets --
    --------------------

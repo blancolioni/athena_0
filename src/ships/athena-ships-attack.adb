@@ -78,7 +78,9 @@ package body Athena.Ships.Attack is
 
       Range_Sorting.Sort (Hostiles);
 
-      if not Actor.Is_Following then
+      if not Actor.Is_Following
+        or else Situation.Get (Actor.Following_Actor).Dead
+      then
          declare
             use Athena.Trigonometry;
 
@@ -126,7 +128,7 @@ package body Athena.Ships.Attack is
                           (H.DX ** 2 + H.DY ** 2);
                begin
 
-                  if Athena.Encounters.Hit_Chance (Weapon, H.Mass, R)
+                  if Athena.Encounters.Hit_Chance (Weapon, H.Size, R)
                     > 0.75
                   then
                      Situation.Fire_Weapon

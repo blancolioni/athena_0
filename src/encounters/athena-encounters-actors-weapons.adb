@@ -30,7 +30,9 @@ package body Athena.Encounters.Actors.Weapons is
       return new Beam_Actor_Type'
         (Index               => Index,
          Class               => Beam_Actor,
+         Dead                => False,
          Mass                => 1.0,
+         Size                => 1.0,
          Location            => Source,
          Heading             => Athena.Trigonometry.From_Degrees (0.0),
          Destination         => Target,
@@ -47,7 +49,8 @@ package body Athena.Encounters.Actors.Weapons is
          Ship                =>
            Athena.Handles.Ship.Get (Ship.Reference_Ship),
          First_Tick          => Tick,
-         Last_Tick           => Tick + 4);
+         Last_Tick           => Tick + 4,
+         Hits                => <>);
    end Create_Beam_Actor;
 
    --------------------

@@ -65,6 +65,8 @@ package Athena.Ships is
         procedure
           (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class));
 
+   procedure Destroy (Ship : Athena.Handles.Ship.Ship_Class);
+
    package Ship_Lists is
      new Ada.Containers.Doubly_Linked_Lists
        (Athena.Handles.Ship.Ship_Handle, Athena.Handles.Ship."=");

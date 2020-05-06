@@ -1,6 +1,12 @@
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Numerics;
 
 with Nazar.Colors;
+
+with Athena.Elementary_Functions;
+with Athena.Logging;
+with Athena.Random;
 
 with Athena.Ships;
 
@@ -56,6 +62,18 @@ package body Athena.Encounters.Actors.Ships is
      (Ship   : in out Ship_Actor_Type;
       Weapon : Athena.Handles.Ship_Component.Ship_Component_Class);
 
+   overriding procedure Apply_Hit
+     (Ship : in out Ship_Actor_Type;
+      Hit  : Hit_Record);
+
+   procedure Apply_Hull_Damage
+     (Ship   : in out Ship_Actor_Type'Class;
+      Damage : Non_Negative_Real);
+
+   function Choose_Mass_Weighted_Component
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class;
+
    function To_Nazar_Color
      (Value : Natural)
       return Nazar.Colors.Nazar_Color
@@ -67,6 +85,164 @@ package body Athena.Encounters.Actors.Ships is
           Blue  =>
              Nazar.Nazar_Unit_Float (Real (Value mod 256) / 255.0),
           Alpha => 1.0));
+
+   ---------------
+   -- Apply_Hit --
+   ---------------
+
+   overriding procedure Apply_Hit
+     (Ship : in out Ship_Actor_Type;
+      Hit  : Hit_Record)
+   is
+      Shield_Level  : constant Unit_Real :=
+                        (if Ship.Max_Shield = 0.0 then 0.0
+                         else Ship.Current_Shield / Ship.Max_Shield);
+      Shield_Damage : constant Non_Negative_Real :=
+                        Real'Min (Hit.Damage * Shield_Level,
+                                  Ship.Current_Shield);
+      Hull_Damage   : constant Non_Negative_Real :=
+                        Hit.Damage - Shield_Damage;
+   begin
+      Ship.Current_Shield := Ship.Current_Shield - Shield_Damage;
+      if Shield_Damage > 0.0 then
+         Athena.Logging.Log
+           (Ship.Image & ": shields now "
+            & Image (Ship.Current_Shield)
+            & "/" & Image (Ship.Max_Shield));
+      end if;
+
+      if Hull_Damage > 0.0 then
+         Apply_Hull_Damage (Ship, Hull_Damage);
+      end if;
+   end Apply_Hit;
+
+   -----------------------
+   -- Apply_Hull_Damage --
+   -----------------------
+
+   procedure Apply_Hull_Damage
+     (Ship   : in out Ship_Actor_Type'Class;
+      Damage : Non_Negative_Real)
+   is
+      Remaining : Non_Negative_Real := Damage;
+      Destroyed : Boolean := False;
+   begin
+      while Remaining > 0.0 loop
+         declare
+            use Athena.Handles.Ship_Component;
+            Component : constant Ship_Component_Class :=
+                          Choose_Mass_Weighted_Component
+                            (Ship.Ship);
+         begin
+            if not Component.Has_Element then
+               Destroyed := True;
+               exit;
+            end if;
+
+            declare
+               Mass : constant Non_Negative_Real :=
+                        Component.Design_Component.Mass;
+               Old_Damage : constant Non_Negative_Real := Component.Damage;
+               Available  : constant Non_Negative_Real :=
+                              Mass - Old_Damage;
+               Applied    : constant Non_Negative_Real :=
+                              Real'Min (Remaining, Available);
+               New_Damage : constant Non_Negative_Real :=
+                              Old_Damage + Applied;
+               New_Condition : constant Unit_Real :=
+                                 1.0 - (New_Damage / Mass) ** 2;
+            begin
+               Component.Update_Ship_Component
+                 .Set_Damage (New_Damage)
+                 .Set_Condition (New_Condition)
+                 .Done;
+
+               if New_Condition > 0.0 then
+                  Athena.Logging.Log
+                    (Ship.Image
+                     & ": damage to "
+                     & Component.Component.Tag
+                     & "; condition now "
+                     & Image (New_Condition * 100.0) & "%");
+               else
+                  Athena.Logging.Log
+                    (Ship.Image
+                     & ": "
+                     & Component.Component.Tag
+                     & " destroyed!");
+               end if;
+
+               Remaining := Remaining - Applied;
+            end;
+         end;
+      end loop;
+
+      Ship.Speed := Real'Min (Ship.Speed, Athena.Ships.Speed (Ship.Ship));
+
+      if Destroyed then
+         Athena.Logging.Log
+           (Ship.Image & ": destroyed!");
+         Ship.Dead := True;
+         Athena.Ships.Destroy (Ship.Ship);
+--
+--           Ship.Ship.Update_Ship
+--             .Set_Fleet (Athena.Handles.Fleet.Empty_Handle)
+--             .Set_Destination (Athena.Handles.Star.Empty_Handle)
+--             .Done;
+      end if;
+   end Apply_Hull_Damage;
+
+   ------------------------------------
+   -- Choose_Mass_Weighted_Component --
+   ------------------------------------
+
+   function Choose_Mass_Weighted_Component
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class
+   is
+      Total_Mass : Non_Negative_Real := 0.0;
+
+      package Component_Lists is
+        new Ada.Containers.Indefinite_Doubly_Linked_Lists
+          (Athena.Handles.Ship_Component.Ship_Component_Class,
+           Athena.Handles.Ship_Component."=");
+
+      List     : Component_Lists.List;
+
+      procedure Add_Component
+        (Component : Athena.Handles.Ship_Component.Ship_Component_Class);
+
+      -------------------
+      -- Add_Component --
+      -------------------
+
+      procedure Add_Component
+        (Component : Athena.Handles.Ship_Component.Ship_Component_Class)
+      is
+      begin
+         if Component.Condition > 0.0 then
+            List.Append (Component);
+            Total_Mass := Total_Mass + Component.Design_Component.Mass;
+         end if;
+      end Add_Component;
+
+      R          : Non_Negative_Real :=
+                     Athena.Random.Unit_Random * Total_Mass;
+
+   begin
+      Athena.Ships.Iterate_Components (Ship, Add_Component'Access);
+
+      if Total_Mass = 0.0 then
+         return Athena.Handles.Ship_Component.Empty_Handle;
+      else
+         while R > List.First_Element.Design_Component.Mass loop
+            R := R - List.First_Element.Design_Component.Mass;
+            List.Delete_First;
+         end loop;
+         return List.First_Element;
+      end if;
+
+   end Choose_Mass_Weighted_Component;
 
    ------------------
    -- Create_Actor --
@@ -141,7 +317,8 @@ package body Athena.Encounters.Actors.Ships is
                              Charge      =>
                                Weapon.Design_Component.Mass * Condition,
                              Charge_Rate =>
-                               Weapon.Design_Component.Mass * Condition * 0.02,
+                               Weapon.Design_Component.Mass
+                             * Condition * 0.02 * Weapon.Tec_Level,
                              Condition   => Condition,
                              Remaining   => 100);
          begin
@@ -157,11 +334,21 @@ package body Athena.Encounters.Actors.Ships is
       Shield : constant Non_Negative_Real := Initial_Shield;
       Weapons : constant Weapon_Lists.List := Initial_Weapons;
 
+      Pi          : constant := Ada.Numerics.Pi;
+      Mass        : constant Non_Negative_Real :=
+                      Athena.Ships.Design_Mass (Ship.Ship_Design);
+      Radius      : constant Non_Negative_Real :=
+                      Athena.Elementary_Functions."**"
+                        (3.0 * Mass / 4.0 / Pi, 1.0 / 3.0);
+      Target_Size : constant Non_Negative_Real :=
+                      Pi * Radius ** 2;
    begin
       return new Ship_Actor_Type'
         (Index               => Index,
          Class               => Ship_Actor,
+         Dead                => False,
          Mass                => Athena.Ships.Mass (Ship),
+         Size                => Target_Size,
          Location            => (X, Y),
          Heading             => Heading,
          Destination         => (X, Y),
@@ -179,6 +366,7 @@ package body Athena.Encounters.Actors.Ships is
            Athena.Handles.Ship.Get (Ship.Reference_Ship),
          First_Tick          => Tick,
          Last_Tick           => Encounter_Tick'Last,
+         Hits                => <>,
          Max_Shield          => Shield,
          Current_Shield      => Shield,
          Weapons             => Weapons);
@@ -199,7 +387,10 @@ package body Athena.Encounters.Actors.Ships is
          Location => Ship.Location,
          Heading  => Ship.Heading,
          Target   => Ship.Location,
-         Color    => To_Nazar_Color (Ship.Owner.Rgb),
+         Color    =>
+           (if Ship.Is_Dead
+            then (0.4, 0.4, 0.4, 1.0)
+            else To_Nazar_Color (Ship.Owner.Rgb)),
          Shield   =>
            (if Ship.Max_Shield > 0.0
             then Ship.Current_Shield / Ship.Max_Shield
@@ -215,18 +406,19 @@ package body Athena.Encounters.Actors.Ships is
       return String
    is
    begin
-      return Ship.Ship.Identifier
-        & " " & Ship.Ship.Name
-        & ": location (" & Image (Ship.Location.X)
-        & "," & Image (Ship.Location.Y)
-        & "); heading "
-        & Image (Athena.Trigonometry.To_Degrees (Ship.Heading))
-        & "; speed " & Image (Ship.Speed)
-        & "/" & Image (Athena.Ships.Speed (Ship.Ship))
-        & (if Ship.Have_Destination
-           then "; destination (" & Image (Ship.Destination.X)
-           & "," & Image (Ship.Destination.Y) & ")"
-           else "");
+      return Ship.Ship.Empire.Name
+        & " ship " & Ship.Ship.Identifier
+        & " " & Ship.Ship.Name;
+--          & ": location (" & Image (Ship.Location.X)
+--          & "," & Image (Ship.Location.Y)
+--          & "); heading "
+--          & Image (Athena.Trigonometry.To_Degrees (Ship.Heading))
+--          & "; speed " & Image (Ship.Speed)
+--          & "/" & Image (Athena.Ships.Speed (Ship.Ship))
+--          & (if Ship.Have_Destination
+--             then "; destination (" & Image (Ship.Destination.X)
+--             & "," & Image (Ship.Destination.Y) & ")"
+--             else "");
    end Image;
 
    --------------------------
@@ -242,7 +434,9 @@ package body Athena.Encounters.Actors.Ships is
    is
    begin
       for Weapon of Ship.Weapons loop
-         if Weapon.Class = Beam then
+         if Weapon.Class = Beam
+           and then Weapon.Max_Charge > 0.0
+         then
             Process (Weapon.Component, Weapon.Charge / Weapon.Max_Charge);
          end if;
       end loop;

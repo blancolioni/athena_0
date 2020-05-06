@@ -9,6 +9,19 @@ with Athena.Ships;
 package body Athena.Encounters.Actors is
 
    -----------------------
+   -- Clear_Destination --
+   -----------------------
+
+   procedure Clear_Destination
+     (Actor  : in out Root_Actor_Type)
+   is
+   begin
+      Actor.Have_Destination := False;
+      Actor.Have_Target_Heading := False;
+      Actor.Is_Following := False;
+   end Clear_Destination;
+
+   -----------------------
    -- Create_Beam_Actor --
    -----------------------
 
@@ -61,7 +74,9 @@ package body Athena.Encounters.Actors is
       return Athena.Encounters.Situation.Situation_Actor'
         (Index   => Actor.Index,
          Class   => Actor.Class,
+         Dead    => Actor.Dead,
          Mass    => Actor.Mass,
+         Size    => Actor.Size,
          DX      => Actor.Location.X - Situation.Origin.X,
          DY      => Actor.Location.Y - Situation.Origin.Y,
          Heading => Actor.Heading - Situation.Heading,
@@ -96,6 +111,20 @@ package body Athena.Encounters.Actors is
       Actor.Follow_Bearing := Bearing;
       Actor.Follow_Range := Min_Range;
    end Follow;
+
+   ---------
+   -- Hit --
+   ---------
+
+   procedure Hit
+     (Actor  : in out Root_Actor_Type;
+      Damage : Non_Negative_Real)
+   is
+   begin
+      Actor.Hits.Append
+        (Hit_Record'
+           (Damage => Damage));
+   end Hit;
 
    -----------
    -- Owner --
@@ -133,7 +162,17 @@ package body Athena.Encounters.Actors is
       Speed     : constant Non_Negative_Real :=
                     Athena.Ships.Speed (Actor.Ship);
    begin
-      if Actor.Have_Destination then
+
+      for Hit of Actor.Hits loop
+         Root_Actor_Type'Class (Actor).Apply_Hit (Hit);
+      end loop;
+
+      Actor.Hits.Clear;
+
+      if not Actor.Dead
+        and then Speed > 0.0
+        and then Actor.Have_Destination
+      then
          declare
             DX        : constant Real :=
                           Actor.Destination.X - Actor.Location.X;
@@ -178,14 +217,17 @@ package body Athena.Encounters.Actors is
                Actor.Speed := Actor.Speed
                  + (1.0 - Actor.Speed / Speed) * Accel;
             end if;
-
-            Actor.Location.X := Actor.Location.X
-              + Actor.Speed * Cos (Actor.Heading);
-            Actor.Location.Y := Actor.Location.Y
-              + Actor.Speed * Sin (Actor.Heading);
-
          end;
+
+      elsif Actor.Speed > 0.0 then
+         Actor.Speed := Actor.Speed * 0.95;
       end if;
+
+      Actor.Location.X := Actor.Location.X
+        + Actor.Speed * Cos (Actor.Heading);
+      Actor.Location.Y := Actor.Location.Y
+        + Actor.Speed * Sin (Actor.Heading);
+
    end Update;
 
    -------------------------------

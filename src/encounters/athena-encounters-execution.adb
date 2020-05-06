@@ -10,6 +10,7 @@ with Athena.Encounters.Scripts;
 with Athena.Encounters.Situation;
 
 with Athena.Ships.Scripts;
+with Athena.Treaties;
 
 with Athena.Handles.Antagonist.Selections;
 with Athena.Handles.Participant.Selections;
@@ -51,6 +52,7 @@ package body Athena.Encounters.Execution is
          Teams     : Team_Maps.Map;
          Tick      : Encounter_Tick;
          Victor    : Athena.Handles.Empire.Empire_Handle;
+         Countdown : Natural;
          Finished  : Boolean;
       end record;
 
@@ -64,6 +66,10 @@ package body Athena.Encounters.Execution is
    procedure Step
      (State     : State_Type;
       Manager   : in out Manager_Interface'Class);
+
+   function Have_Hostiles
+     (State : State_Type)
+      return Boolean;
 
    type Situation_Type is
      new Athena.Encounters.Situation.Situation_Interface with
@@ -129,13 +135,38 @@ package body Athena.Encounters.Execution is
                   Situation.State.Tick,
                   Weapon.Ship, Situation.Actor.Location,
                   Actor.Location);
+      Target_Size : constant Non_Negative_Real := Actor.Size;
+      Target_Range : constant Non_Negative_Real :=
+                       Situation.Get_Range (Target);
+      P_Hit : constant Unit_Real :=
+                Hit_Chance
+                  (Weapon       => Weapon,
+                   Target_Size  => Target_Size,
+                   Target_Range => Target_Range);
+      Hit          : constant Boolean := Athena.Random.Unit_Random <= P_Hit;
+      Damage       : constant Non_Negative_Real :=
+                       (if Hit
+                        then Hit_Power (Weapon, Target_Range)
+                        else 0.0);
    begin
       Situation.New_Actors.Append (Beam);
       Situation.New_Scripts.Append (Athena.Encounters.Scripts.Beam_Script);
       Situation.Actor.Weapon_Fired (Weapon);
+
+      if Hit then
+         Actor.Hit (Damage);
+      end if;
+
       Athena.Logging.Log
-        (Weapon.Ship.Name & " fires at "
-           & Actor.Image);
+        ("timestamp" & Situation.State.Tick'Image
+         & ": " & Weapon.Ship.Empire.Name & " ship "
+         & Weapon.Ship.Identifier & " " & Weapon.Ship.Name & " fires at "
+         & Actor.Image
+         & ": range " & Image (Target_Range)
+         & "; target size " & Image (Target_Size)
+         & "; chance " & Image (P_Hit * 100.0) & "%"
+         & "; result = " & (if Hit then "HIT" else "miss")
+         & "; damage = " & Image (Damage));
    end Fire_Weapon;
 
    ---------
@@ -151,6 +182,45 @@ package body Athena.Encounters.Execution is
       return Situation.State.Actors.Element (Actor)
         .Current_Situation (Situation);
    end Get;
+
+   -------------------
+   -- Have_Hostiles --
+   -------------------
+
+   function Have_Hostiles
+     (State : State_Type)
+      return Boolean
+   is
+      Active : Actor_Vectors.Vector;
+      Result : Boolean := False;
+   begin
+      for Actor of State.Actors loop
+         if Actor.Is_Active (State.Tick) and then not Actor.Is_Dead then
+            for A of Active loop
+               if A.Owner.Identifier /= Actor.Owner.Identifier
+                 and then Athena.Treaties.At_War
+                   (A.Owner, Actor.Owner)
+               then
+                  Result := True;
+                  exit;
+               end if;
+            end loop;
+            exit when Result;
+            Active.Append (Actor);
+         end if;
+      end loop;
+
+      if not Result
+        and then not Active.Is_Empty
+      then
+         State.Victor :=
+           Athena.Handles.Empire.Get
+             (Active.First_Element.Owner.Reference_Empire);
+      end if;
+
+      return Result;
+
+   end Have_Hostiles;
 
    --------------------
    -- Iterate_Actors --
@@ -185,6 +255,7 @@ package body Athena.Encounters.Execution is
         (Actor : Athena.Encounters.Actors.Actor_Type)
          return Boolean
       is (Actor.Is_Active (Situation.State.Tick)
+          and then not Actor.Is_Dead
           and then Actor.Owner.Identifier = Situation.Actor.Owner.Identifier);
    begin
       Situation.Iterate_Actors (Is_Ally'Access, Process);
@@ -203,6 +274,7 @@ package body Athena.Encounters.Execution is
         (Actor : Athena.Encounters.Actors.Actor_Type)
          return Boolean
       is (Actor.Is_Active (Situation.State.Tick)
+          and then not Actor.Is_Dead
           and then Actor.Owner.Identifier /= Situation.Actor.Owner.Identifier);
    begin
       Situation.Iterate_Actors (Is_Hostile'Access, Process);
@@ -236,6 +308,7 @@ package body Athena.Encounters.Execution is
                    Teams     => <>,
                    Tick      => 0,
                    Finished  => False,
+                   Countdown => 0,
                    Victor    => Athena.Handles.Empire.Empty_Handle);
 
       procedure Deploy
@@ -369,7 +442,9 @@ package body Athena.Encounters.Execution is
    is
    begin
       for Index in 1 .. State.Scripts.Last_Index loop
-         if State.Actors.Element (Index).Is_Active (State.Tick) then
+         if State.Actors.Element (Index).Is_Active (State.Tick)
+           and then not State.Actors.Element (Index).Is_Dead
+         then
             declare
                Situation : Situation_Type :=
                              Situation_Type'
@@ -413,9 +488,23 @@ package body Athena.Encounters.Execution is
       end;
 
       State.Tick := State.Tick + 1;
-      if State.Tick = Max_Ticks then
+
+      if State.Countdown = 0
+        and then not Have_Hostiles (State)
+      then
+         State.Countdown := 20;
+      end if;
+
+      if State.Countdown > 1 then
+         State.Countdown := State.Countdown - 1;
+      end if;
+
+      if (State.Tick = Max_Ticks and then State.Countdown = 0)
+        or else State.Countdown = 1
+      then
          State.Finished := True;
       end if;
+
    end Step;
 
 end Athena.Encounters.Execution;

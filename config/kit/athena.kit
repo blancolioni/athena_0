@@ -192,6 +192,7 @@ record Ship : Has_Identifier, Has_Name is
     key Manager : Empire_Manager;
     key Destination : Star;
     Ship_Design;
+    Alive       : Boolean;
     First_Order : Natural;
     Last_Order  : Natural;
     Progress    : Long_Float;
@@ -210,6 +211,7 @@ record Ship_Component : Has_Identifier is
     Design_Component;
     Tec_Level : Long_Float;
     Condition : Long_Float;
+    Damage    : Long_Float;
 end Ship_Component;
 
 type Ship_Action is (Load, Unload, Move);
