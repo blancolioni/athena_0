@@ -236,8 +236,10 @@ package body Athena.Updates is
       Total_Mass  : Non_Negative_Real := 0.0;
    begin
       for Ship of Select_Where (Empire = Fleet_Owner) loop
-         Total_Ships := Total_Ships + 1;
-         Total_Mass  := Total_Mass + Athena.Ships.Mass (Ship);
+         if Ship.Alive then
+            Total_Ships := Total_Ships + 1;
+            Total_Mass  := Total_Mass + Athena.Ships.Mass (Ship);
+         end if;
       end loop;
 
       declare
