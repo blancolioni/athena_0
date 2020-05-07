@@ -397,7 +397,8 @@ package body Athena.Encounters.Execution is
                   & Image (Athena.Ships.Get_Drive (Ship).Design_Component.Mass)
                   & " tec "
                   & Image (Athena.Ships.Get_Drive (Ship).Tec_Level)
-                  & "; speed " & Image (Athena.Ships.Speed (Ship)));
+                  & "; speed " & Image (Athena.Ships.Speed (Ship))
+                  & "; experience " & Image (Ship.Experience));
             end loop;
             Deploy (Team, Current_Angle);
             Current_Angle := Current_Angle + Angular_Sep;
