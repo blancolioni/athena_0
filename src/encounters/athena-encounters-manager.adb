@@ -154,7 +154,8 @@ package body Athena.Encounters.Manager is
 
    begin
       Athena.Logging.Log
-        ("Resolving the Battle of " & Star.Name);
+        ("Resolving the Battle of " & Star.Name
+         & "; ships involved" & Natural'Image (Natural (Ships.Length)));
 
       for Ship of Ships loop
          Athena.Handles.Participant.Create
