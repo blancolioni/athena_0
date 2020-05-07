@@ -2,6 +2,8 @@ with Athena.Encounters.Actors;
 with Athena.Encounters.Situation;
 
 with Athena.Elementary_Functions;
+with Athena.Logging;
+with Athena.Random;
 with Athena.Trigonometry;
 
 package body Athena.Ships.Attack is
@@ -84,17 +86,51 @@ package body Athena.Ships.Attack is
          declare
             use Athena.Trigonometry;
 
-            Allied_Centre : constant Athena.Encounters.Encounter_Point :=
-                              Situation.Allied_Centre;
-
             Bearing       : constant Angle :=
-                              Arctan (Allied_Centre.Y - Actor.Location.Y,
-                                      Allied_Centre.X - Actor.Location.X);
+                              From_Degrees (Athena.Random.Unit_Random * 360.0);
+
+            Total_Range_Weight : Non_Negative_Real := 0.0;
+            Total_Weight       : Non_Negative_Real := 0.0;
+
+            function Ideal_Range return Non_Negative_Real
+            is (if Total_Weight = 0.0
+                then 1.0e6
+                else Real'Max (Total_Range_Weight / Total_Weight, 20.0));
+
+            procedure Check_Weapon
+              (Component : Athena.Handles.Ship_Component.Ship_Component_Class;
+               Charge    : Unit_Real);
+
+            ------------------
+            -- Check_Weapon --
+            ------------------
+
+            procedure Check_Weapon
+              (Component : Athena.Handles.Ship_Component.Ship_Component_Class;
+               Charge    : Unit_Real)
+            is
+               pragma Unreferenced (Charge);
+               Weight : constant Non_Negative_Real :=
+                          Component.Design_Component.Mass
+                            * Component.Condition;
+               R      : constant Non_Negative_Real :=
+                          (if Weight = 0.0
+                           then 0.0
+                           else Athena.Encounters.Range_At_Hit_Chance
+                            (Weapon      => Component,
+                             Target_Size => Hostiles.First_Element.Size,
+                             Hit_Chance  => 0.8));
+            begin
+               Total_Weight := Total_Weight + Weight;
+               Total_Range_Weight := Total_Range_Weight + Weight * R;
+            end Check_Weapon;
 
          begin
-            Situation.Iterate_Hostiles (Add_Hostile'Access);
-
-            Actor.Follow (Hostiles.First_Element, Bearing, 50.0);
+            Actor.Iterate_Beam_Weapons (Check_Weapon'Access);
+            Actor.Follow (Hostiles.First_Element, Bearing, Ideal_Range);
+            Athena.Logging.Log
+              (Actor.Image & ": following hostile at range"
+               & Natural'Image (Natural (Ideal_Range)));
          end;
       end if;
 
