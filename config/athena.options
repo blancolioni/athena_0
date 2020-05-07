@@ -31,7 +31,8 @@ package Athena.Options is
     View_Encounter          : Boolean;
     Star_Name               : String;
     Turn                    : Natural;
-
+    Show_Destination        : Boolean;
+    
     Auto_Update             : Boolean;
     Update_Interval         : Natural;
 

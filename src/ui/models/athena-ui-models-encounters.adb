@@ -2,6 +2,8 @@ with Ada.Text_IO;
 
 with Nazar.Colors;
 
+with Athena.Elementary_Functions;
+with Athena.Options;
 with Athena.Trigonometry;
 
 with Athena.Encounters.Manager;
@@ -34,12 +36,13 @@ package body Athena.UI.Models.Encounters is
       Sprite : Athena.Encounters.Sprites.Sprite_Type);
 
    procedure Draw_Ship
-     (Model    : in out Root_Encounter_Model'Class;
-      Size     : Non_Negative_Real;
-      Color    : Nazar.Colors.Nazar_Color;
-      Location : Athena.Encounters.Encounter_Point;
-      Heading  : Athena.Trigonometry.Angle;
-      Shield   : Unit_Real);
+     (Model       : in out Root_Encounter_Model'Class;
+      Size        : Non_Negative_Real;
+      Color       : Nazar.Colors.Nazar_Color;
+      Location    : Athena.Encounters.Encounter_Point;
+      Destination : Athena.Encounters.Encounter_Point;
+      Heading     : Athena.Trigonometry.Angle;
+      Shield      : Unit_Real);
 
    procedure Draw_Beam
      (Model    : in out Root_Encounter_Model'Class;
@@ -116,12 +119,13 @@ package body Athena.UI.Models.Encounters is
    ---------------
 
    procedure Draw_Ship
-     (Model    : in out Root_Encounter_Model'Class;
-      Size     : Non_Negative_Real;
-      Color    : Nazar.Colors.Nazar_Color;
-      Location : Athena.Encounters.Encounter_Point;
-      Heading  : Athena.Trigonometry.Angle;
-      Shield   : Unit_Real)
+     (Model       : in out Root_Encounter_Model'Class;
+      Size        : Non_Negative_Real;
+      Color       : Nazar.Colors.Nazar_Color;
+      Location    : Athena.Encounters.Encounter_Point;
+      Destination : Athena.Encounters.Encounter_Point;
+      Heading     : Athena.Trigonometry.Angle;
+      Shield      : Unit_Real)
    is
       use Athena.Encounters;
       A      : constant Encounter_Point :=
@@ -172,6 +176,20 @@ package body Athena.UI.Models.Encounters is
             Model.Restore_State;
          end;
       end if;
+
+      if Destination /= Location
+        and then Athena.Options.Show_Destination
+      then
+         Model.Save_State;
+         Model.Set_Color (0.5, 0.5, 0.5, 1.0);
+         Model.Move_To (Nazar.Nazar_Float (Location.X),
+                        Nazar.Nazar_Float (Location.Y));
+         Model.Line_To (Nazar.Nazar_Float (Destination.X),
+                        Nazar.Nazar_Float (Destination.Y));
+         Model.Render;
+         Model.Restore_State;
+      end if;
+
    end Draw_Ship;
 
    -----------------
@@ -187,9 +205,15 @@ package body Athena.UI.Models.Encounters is
    begin
       case Class (Sprite) is
          when Ship_Actor =>
-            Model.Draw_Ship (Size (Sprite), Color (Sprite),
-                             Location (Sprite), Heading (Sprite),
-                             Shield (Sprite));
+            Model.Draw_Ship
+              (Size        =>
+                  5.0 *
+                  Athena.Elementary_Functions.Sqrt (Size (Sprite)),
+               Color       => Color (Sprite),
+               Location    => Location (Sprite),
+               Destination => Target (Sprite),
+               Heading     => Heading (Sprite),
+               Shield      => Shield (Sprite));
          when Beam_Actor =>
             Model.Draw_Beam
               (Color (Sprite), Location (Sprite), Target (Sprite));
