@@ -361,7 +361,9 @@ package body Athena.Ships is
    is
    begin
       for Ship of Ship_Vector loop
-         Process (Ship.Handle);
+         if Ship.Handle.Alive then
+            Process (Ship.Handle);
+         end if;
       end loop;
    end For_All_Ships;
 
@@ -505,7 +507,9 @@ package body Athena.Ships is
       Ada.Text_IO.Flush;
 
       for Ship of Athena.Handles.Ship.Selections.Select_All loop
-         Add_Ship (Ship);
+         if Ship.Alive then
+            Add_Ship (Ship);
+         end if;
       end loop;
 
       Ada.Text_IO.Put_Line (" done");
