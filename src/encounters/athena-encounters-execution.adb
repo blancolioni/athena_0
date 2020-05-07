@@ -67,6 +67,9 @@ package body Athena.Encounters.Execution is
      (State     : State_Type;
       Manager   : in out Manager_Interface'Class);
 
+   procedure Log (State   : State_Type;
+                  Message : String);
+
    function Have_Hostiles
      (State : State_Type)
       return Boolean;
@@ -157,13 +160,16 @@ package body Athena.Encounters.Execution is
          Actor.Hit (Damage);
       end if;
 
-      Athena.Logging.Log
-        ("timestamp" & Situation.State.Tick'Image
-         & ": " & Weapon.Ship.Empire.Name & " ship "
+      Log
+        (Situation.State,
+         Weapon.Ship.Empire.Name & " ship "
          & Weapon.Ship.Identifier & " " & Weapon.Ship.Name & " fires at "
          & Actor.Image
          & ": range " & Image (Target_Range)
+         & "/" & Image (Maximum_Range (Weapon))
          & "; target size " & Image (Target_Size)
+         & "; tec level " & Image (Weapon.Tec_Level)
+         & "; condition " & Image (Weapon.Condition * 100.0) & "%"
          & "; chance " & Image (P_Hit * 100.0) & "%"
          & "; result = " & (if Hit then "HIT" else "miss")
          & "; damage = " & Image (Damage));
@@ -279,6 +285,19 @@ package body Athena.Encounters.Execution is
    begin
       Situation.Iterate_Actors (Is_Hostile'Access, Process);
    end Iterate_Hostiles;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log (State   : State_Type;
+                  Message : String)
+   is
+   begin
+      Athena.Logging.Log
+        ("timestamp" & State.Tick'Image
+         & ": " & Message);
+   end Log;
 
    ---------
    -- Log --
@@ -493,6 +512,7 @@ package body Athena.Encounters.Execution is
       if State.Countdown = 0
         and then not Have_Hostiles (State)
       then
+         Log (State, "starting countdown");
          State.Countdown := 20;
       end if;
 
@@ -503,6 +523,7 @@ package body Athena.Encounters.Execution is
       if (State.Tick = Max_Ticks and then State.Countdown = 0)
         or else State.Countdown = 1
       then
+         Log (State, "setting finished");
          State.Finished := True;
       end if;
 
