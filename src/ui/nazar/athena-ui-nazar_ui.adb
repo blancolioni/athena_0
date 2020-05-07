@@ -10,7 +10,6 @@ with Nazar.Views.Button;
 with Nazar.Views.Draw;
 
 with Nazar.Main;
-with Nazar.Gtk_Main;
 with Nazar.Signals;
 
 with Athena.UI.Models.Encounters;
@@ -63,6 +62,13 @@ package body Athena.UI.Nazar_UI is
    procedure Next_Encounter_Tick
      (User_Data : Nazar.Signals.User_Data_Interface'Class)
      with Unreferenced;
+
+   task Update_Task is
+      entry Start (UI : Athena_Nazar_UI;
+                   Interval : Duration);
+      entry Run_Update;
+      entry Stop;
+   end Update_Task;
 
    ----------------------
    -- Get_Encounter_UI --
@@ -156,13 +162,6 @@ package body Athena.UI.Nazar_UI is
            (Builder.Get_View ("update"))
              .On_Activate (On_Update_Clicked'Access, Result);
 
-         if Athena.Options.Auto_Update then
-            Nazar.Gtk_Main.Start_Timer
-              (Timeout   => Duration (Athena.Options.Update_Interval),
-               User_Data => Result,
-               Callback  => On_Update_Clicked'Access);
-         end if;
-
       end return;
    end Get_UI;
 
@@ -190,12 +189,9 @@ package body Athena.UI.Nazar_UI is
    procedure On_Update_Clicked
      (User_Data : Nazar.Signals.User_Data_Interface'Class)
    is
-      UI : Athena_Nazar_UI'Class renames Athena_Nazar_UI'Class (User_Data);
+      pragma Unreferenced (User_Data);
    begin
-      Athena.Updates.Run_Update;
-      for Model of UI.Models loop
-         Model.Reload;
-      end loop;
+      Update_Task.Run_Update;
    end On_Update_Clicked;
 
    -----------
@@ -206,7 +202,17 @@ package body Athena.UI.Nazar_UI is
      (UI : in out Athena_Nazar_UI)
    is
    begin
+      if Athena.Options.Auto_Update then
+         Update_Task.Start
+           (UI, Duration (Athena.Options.Update_Interval));
+      end if;
+
       UI.Top.Show;
+
+      if Athena.Options.Auto_Update then
+         Update_Task.Stop;
+      end if;
+
    end Start;
 
    -----------
@@ -220,5 +226,58 @@ package body Athena.UI.Nazar_UI is
       UI.Top.Show;
       UI.Encounter_Model.Unload;
    end Start;
+
+   -----------------
+   -- Update_Task --
+   -----------------
+
+   task body Update_Task is
+      Update_UI       : Athena_Nazar_UI;
+      Update_Interval : Duration;
+
+      procedure Reload_Models;
+
+      -------------------
+      -- Reload_Models --
+      -------------------
+
+      procedure Reload_Models is
+      begin
+         for Model of Update_UI.Models loop
+            Model.Reload;
+         end loop;
+      end Reload_Models;
+
+   begin
+      select
+         accept Start (UI : in Athena_Nazar_UI; Interval : in Duration) do
+            Update_UI := UI;
+            Update_Interval := Interval;
+         end Start;
+      or
+         terminate;
+      end select;
+
+      loop
+         select
+            accept Stop;
+            exit;
+         or
+            accept Run_Update;
+            Athena.Updates.Run_Update;
+
+            Nazar.Main.With_Render_Lock
+              (Reload_Models'Access);
+
+         or
+            delay Update_Interval;
+            Athena.Updates.Run_Update;
+
+            Nazar.Main.With_Render_Lock
+              (Reload_Models'Access);
+
+         end select;
+      end loop;
+   end Update_Task;
 
 end Athena.UI.Nazar_UI;
