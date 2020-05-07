@@ -226,19 +226,23 @@ package body Athena.Encounters.Actors.Ships is
          end if;
       end Add_Component;
 
-      R          : Non_Negative_Real :=
-                     Athena.Random.Unit_Random * Total_Mass;
-
    begin
       Athena.Ships.Iterate_Components (Ship, Add_Component'Access);
 
       if Total_Mass = 0.0 then
          return Athena.Handles.Ship_Component.Empty_Handle;
       else
-         while R > List.First_Element.Design_Component.Mass loop
-            R := R - List.First_Element.Design_Component.Mass;
-            List.Delete_First;
-         end loop;
+         declare
+            R : Non_Negative_Real :=
+                  Athena.Random.Unit_Random * Total_Mass;
+         begin
+
+            while R > List.First_Element.Design_Component.Mass loop
+               R := R - List.First_Element.Design_Component.Mass;
+               List.Delete_First;
+            end loop;
+         end;
+
          return List.First_Element;
       end if;
 
@@ -386,7 +390,10 @@ package body Athena.Encounters.Actors.Ships is
          Size     => Ship.Mass,
          Location => Ship.Location,
          Heading  => Ship.Heading,
-         Target   => Ship.Location,
+         Target   => (if Ship.Have_Destination
+                      or else Ship.Is_Following
+                      then Ship.Destination
+                      else Ship.Location),
          Color    =>
            (if Ship.Is_Dead
             then (0.4, 0.4, 0.4, 1.0)
