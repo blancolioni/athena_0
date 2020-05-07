@@ -21,14 +21,6 @@ with Athena.Updates;
 with Athena.Options;
 with Athena.Paths;
 
-------------------------
--- Athena.UI.Nazar_UI --
-------------------------
-
-------------------------
--- Athena.UI.Nazar_UI --
-------------------------
-
 package body Athena.UI.Nazar_UI is
 
    package Model_Lists is
@@ -69,7 +61,8 @@ package body Athena.UI.Nazar_UI is
      (User_Data : Nazar.Signals.User_Data_Interface'Class);
 
    procedure Next_Encounter_Tick
-     (User_Data : Nazar.Signals.User_Data_Interface'Class);
+     (User_Data : Nazar.Signals.User_Data_Interface'Class)
+     with Unreferenced;
 
    ----------------------
    -- Get_Encounter_UI --
@@ -105,12 +98,6 @@ package body Athena.UI.Nazar_UI is
             View  =>
               Nazar.Views.Draw.Nazar_Draw_View
                 (Builder.Get_View ("encounter")));
-
-         Nazar.Gtk_Main.Start_Timer
-           (Timeout   => 0.2,
-            User_Data => Result,
-            Callback  => Next_Encounter_Tick'Access);
-
       end return;
    end Get_Encounter_UI;
 
@@ -231,6 +218,7 @@ package body Athena.UI.Nazar_UI is
    is
    begin
       UI.Top.Show;
+      UI.Encounter_Model.Unload;
    end Start;
 
 end Athena.UI.Nazar_UI;
