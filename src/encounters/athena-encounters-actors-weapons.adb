@@ -1,10 +1,15 @@
+with Nazar;
+
 package body Athena.Encounters.Actors.Weapons is
 
    type Beam_Actor_Type is
      new Root_Actor_Type with
       record
-         null;
+         Progress : Unit_Real;
       end record;
+
+   overriding procedure Update
+     (Beam : in out Beam_Actor_Type);
 
    overriding function Image
      (Beam : Beam_Actor_Type)
@@ -49,8 +54,9 @@ package body Athena.Encounters.Actors.Weapons is
          Ship                =>
            Athena.Handles.Ship.Get (Ship.Reference_Ship),
          First_Tick          => Tick,
-         Last_Tick           => Tick + 4,
-         Hits                => <>);
+         Last_Tick           => Tick + 3,
+         Hits                => <>,
+         Progress            => 0.0);
    end Create_Beam_Actor;
 
    --------------------
@@ -61,14 +67,28 @@ package body Athena.Encounters.Actors.Weapons is
      (Beam : Beam_Actor_Type)
       return Athena.Encounters.Sprites.Sprite_Type
    is
+      DX : constant Real :=
+             Beam.Destination.X - Beam.Location.X;
+      DY : constant Real :=
+             Beam.Destination.Y - Beam.Location.Y;
+      X1 : constant Real :=
+             Beam.Location.X + DX * 0.04;
+      Y1 : constant Real :=
+             Beam.Location.Y + DY * 0.04;
+      X2 : constant Real :=
+             Beam.Location.X + DX * 0.98;
+      Y2 : constant Real :=
+             Beam.Location.Y + DY * 0.98;
+
    begin
       return Athena.Encounters.Sprites.Make_Sprite
         (Class    => Beam_Actor,
          Size     => 1.0,
-         Location => Beam.Location,
+         Location => (X1, Y1),
          Heading  => Beam.Heading,
-         Target   => Beam.Destination,
-         Color    => (1.0, 1.0, 1.0, 1.0),
+         Target   => (X2, Y2),
+         Color    => (0.0, Nazar.Nazar_Unit_Float (1.0 - Beam.Progress),
+                      0.0, 1.0),
          Shield   => 0.0);
    end Current_Sprite;
 
@@ -87,5 +107,17 @@ package body Athena.Encounters.Actors.Weapons is
         & "," & Image (Beam.Destination.Y)
         & ")";
    end Image;
+
+   ------------
+   -- Update --
+   ------------
+
+   overriding procedure Update
+     (Beam : in out Beam_Actor_Type)
+   is
+   begin
+      Root_Actor_Type (Beam).Update;
+      Beam.Progress := Beam.Progress + 0.2;
+   end Update;
 
 end Athena.Encounters.Actors.Weapons;
