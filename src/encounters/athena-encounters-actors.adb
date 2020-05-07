@@ -211,7 +211,9 @@ package body Athena.Encounters.Actors is
                end if;
             end if;
 
-            if Stop_Dist > Distance then
+            if Stop_Dist > Distance
+              or else To_Degrees (abs Bearing) > 90.0
+            then
                Actor.Speed := Real'Max (Actor.Speed - Accel, 0.0);
             else
                Actor.Speed := Actor.Speed
