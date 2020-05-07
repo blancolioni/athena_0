@@ -11,6 +11,8 @@ with Athena.Voronoi_Diagrams;
 with Athena.Empires;
 with Athena.Turns;
 
+with Athena.Knowledge.Stars;
+
 with Athena.Handles.Journey.Selections;
 with Athena.Handles.Ship.Selections;
 with Athena.Handles.Star.Selections;
@@ -161,12 +163,8 @@ package body Athena.UI.Models.Galaxy is
                      Model.Set_Color (To_Nazar_Color (Empire_Ship.Empire.Rgb));
                   end if;
 
-                  for I in 1 .. Empire_Ship.Count loop
-                     Model.Circle (Radius);
-                     Model.Render;
-                     Radius := Radius + 2.0;
-                  end loop;
-
+                  Model.Circle (Radius);
+                  Model.Render;
                   Radius := Radius + 2.0;
                end loop;
                Model.Restore_State;
@@ -209,11 +207,13 @@ package body Athena.UI.Models.Galaxy is
      (Empire : Athena.Handles.Empire.Empire_Class)
       return Nazar.Models.Draw.Nazar_Draw_Model
    is
-      pragma Unreferenced (Empire);
-
       Model         : constant Galaxy_Model_Access :=
                         new Root_Galaxy_Model;
    begin
+
+      Model.Empire :=
+        Athena.Handles.Empire.Get
+          (Empire.Reference_Empire);
 
       Ada.Text_IO.Put ("Creating galaxy view ...");
       Ada.Text_IO.Flush;
@@ -239,10 +239,10 @@ package body Athena.UI.Models.Galaxy is
 
       Centre_Star : constant Athena.Handles.Star.Star_Class :=
                       Athena.Empires.Capital (Model.Empire);
-      Left        : Real := Centre_Star.X - 35.0;
-      Top         : Real := Centre_Star.Y - 35.0;
-      Right       : Real := Centre_Star.X + 35.0;
-      Bottom      : Real := Centre_Star.Y + 35.0;
+      Left        : Real := Centre_Star.X - 10.0;
+      Top         : Real := Centre_Star.Y - 10.0;
+      Right       : Real := Centre_Star.X + 10.0;
+      Bottom      : Real := Centre_Star.Y + 10.0;
       Voronoi     : Athena.Voronoi_Diagrams.Voronoi_Diagram;
    begin
 
@@ -258,7 +258,7 @@ package body Athena.UI.Models.Galaxy is
                   Color    => Color,
                   X        => Nazar.Nazar_Float (Star.X),
                   Y        => Nazar.Nazar_Float (Star.Y),
-                  Ships    => Orbiting_Ships (Star),
+                  Ships    => <>,
                   Boundary => <>);
             begin
                Model.Stars.Append (Rec);
@@ -292,12 +292,24 @@ package body Athena.UI.Models.Galaxy is
             end;
          end loop;
 
-      else
+      end if;
+
+      declare
+         Knowledge : Athena.Knowledge.Stars.Star_Knowledge;
+      begin
+         Knowledge.Load (Model.Empire);
 
          for Rec of Model.Stars loop
             Rec.Ships := Orbiting_Ships (Rec.Handle);
+
+            if Knowledge.Visited (Rec.Handle) then
+               Left := Real'Min (Left, Rec.Handle.X - 5.0);
+               Top  := Real'Min (Top, Rec.Handle.Y - 5.0);
+               Right := Real'Max (Right, Rec.Handle.X + 5.0);
+               Bottom  := Real'Max (Bottom, Rec.Handle.Y + 5.0);
+            end if;
          end loop;
-      end if;
+      end;
 
       Model.Journeys.Clear;
 
