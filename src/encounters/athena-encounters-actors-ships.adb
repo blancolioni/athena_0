@@ -150,7 +150,7 @@ package body Athena.Encounters.Actors.Ships is
                New_Damage : constant Non_Negative_Real :=
                               Old_Damage + Applied;
                New_Condition : constant Unit_Real :=
-                                 1.0 - (New_Damage / Mass) ** 2;
+                                 (1.0 - (New_Damage / Mass)) ** 2;
             begin
                Component.Update_Ship_Component
                  .Set_Damage (New_Damage)
