@@ -40,11 +40,22 @@ package Athena.Encounters is
       Turn_Number : Positive)
       return Athena.Handles.Encounter.Encounter_Class;
 
+   function Maximum_Range
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class)
+      return Non_Negative_Real;
+
    function Hit_Chance
      (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
       Target_Size  : Non_Negative_Real;
       Target_Range : Non_Negative_Real)
       return Unit_Real;
+
+   function Range_At_Hit_Chance
+     (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
+      Target_Size  : Non_Negative_Real;
+      Hit_Chance   : Unit_Real)
+      return Non_Negative_Real
+     with Pre => Weapon.Condition > 0.0;
 
    function Hit_Power
      (Weapon       : Athena.Handles.Ship_Component.Ship_Component_Class;
