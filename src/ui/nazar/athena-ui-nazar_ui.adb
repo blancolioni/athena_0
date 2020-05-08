@@ -10,7 +10,6 @@ with Nazar.Views.Button;
 with Nazar.Views.Draw;
 
 with Nazar.Main;
-with Nazar.Gtk_Main;
 with Nazar.Signals;
 
 with Athena.UI.Models.Encounters;
@@ -20,14 +19,6 @@ with Athena.Updates;
 
 with Athena.Options;
 with Athena.Paths;
-
-------------------------
--- Athena.UI.Nazar_UI --
-------------------------
-
-------------------------
--- Athena.UI.Nazar_UI --
-------------------------
 
 package body Athena.UI.Nazar_UI is
 
@@ -59,6 +50,7 @@ package body Athena.UI.Nazar_UI is
          Top            : Nazar.Views.Nazar_View;
          Models         : Model_Lists.List;
          Galaxy_Model   : Nazar.Models.Draw.Nazar_Draw_Model;
+         Galaxy_View    : Nazar.Views.Draw.Nazar_Draw_View;
          Galaxy_Control : Nazar.Controllers.Draw.Nazar_Draw_Controller_Record;
       end record;
 
@@ -69,7 +61,15 @@ package body Athena.UI.Nazar_UI is
      (User_Data : Nazar.Signals.User_Data_Interface'Class);
 
    procedure Next_Encounter_Tick
-     (User_Data : Nazar.Signals.User_Data_Interface'Class);
+     (User_Data : Nazar.Signals.User_Data_Interface'Class)
+     with Unreferenced;
+
+   task Update_Task is
+      entry Start (UI : Athena_Nazar_UI;
+                   Interval : Duration);
+      entry Run_Update;
+      entry Stop;
+   end Update_Task;
 
    ----------------------
    -- Get_Encounter_UI --
@@ -105,12 +105,6 @@ package body Athena.UI.Nazar_UI is
             View  =>
               Nazar.Views.Draw.Nazar_Draw_View
                 (Builder.Get_View ("encounter")));
-
-         Nazar.Gtk_Main.Start_Timer
-           (Timeout   => 0.2,
-            User_Data => Result,
-            Callback  => Next_Encounter_Tick'Access);
-
       end return;
    end Get_Encounter_UI;
 
@@ -131,13 +125,15 @@ package body Athena.UI.Nazar_UI is
       return Result : Athena_Nazar_UI do
          Result.Top := Builder.Get_View ("Athena");
          Result.Galaxy_Model := Athena.UI.Models.Galaxy.Galaxy_Model (Empire);
+         Result.Galaxy_View :=
+           Nazar.Views.Draw.Nazar_Draw_View
+             (Builder.Get_View ("galaxy"));
+
          Result.Models.Append (Nazar.Models.Nazar_Model (Result.Galaxy_Model));
 
          Result.Galaxy_Control.Start_Draw
            (Model => Result.Galaxy_Model,
-            View  =>
-              Nazar.Views.Draw.Nazar_Draw_View
-                (Builder.Get_View ("galaxy")));
+            View  => Result.Galaxy_View);
 
          Builder.Get_View ("empire-label").Set_Property ("text", Empire.Name);
 
@@ -169,13 +165,6 @@ package body Athena.UI.Nazar_UI is
            (Builder.Get_View ("update"))
              .On_Activate (On_Update_Clicked'Access, Result);
 
-         if Athena.Options.Auto_Update then
-            Nazar.Gtk_Main.Start_Timer
-              (Timeout   => Duration (Athena.Options.Update_Interval),
-               User_Data => Result,
-               Callback  => On_Update_Clicked'Access);
-         end if;
-
       end return;
    end Get_UI;
 
@@ -203,12 +192,9 @@ package body Athena.UI.Nazar_UI is
    procedure On_Update_Clicked
      (User_Data : Nazar.Signals.User_Data_Interface'Class)
    is
-      UI : Athena_Nazar_UI'Class renames Athena_Nazar_UI'Class (User_Data);
+      pragma Unreferenced (User_Data);
    begin
-      Athena.Updates.Run_Update;
-      for Model of UI.Models loop
-         Model.Reload;
-      end loop;
+      Update_Task.Run_Update;
    end On_Update_Clicked;
 
    -----------
@@ -219,7 +205,17 @@ package body Athena.UI.Nazar_UI is
      (UI : in out Athena_Nazar_UI)
    is
    begin
+      if Athena.Options.Auto_Update then
+         Update_Task.Start
+           (UI, Duration (Athena.Options.Update_Interval));
+      end if;
+
       UI.Top.Show;
+
+      if Athena.Options.Auto_Update then
+         Update_Task.Stop;
+      end if;
+
    end Start;
 
    -----------
@@ -231,6 +227,62 @@ package body Athena.UI.Nazar_UI is
    is
    begin
       UI.Top.Show;
+      UI.Encounter_Model.Unload;
    end Start;
+
+   -----------------
+   -- Update_Task --
+   -----------------
+
+   task body Update_Task is
+      Update_UI       : Athena_Nazar_UI;
+      Update_Interval : Duration;
+
+      procedure Reload_Models;
+
+      -------------------
+      -- Reload_Models --
+      -------------------
+
+      procedure Reload_Models is
+      begin
+         for Model of Update_UI.Models loop
+            Model.Reload;
+         end loop;
+         Update_UI.Galaxy_View.Set_Viewport
+           (Update_UI.Galaxy_Model.Bounding_Box);
+      end Reload_Models;
+
+   begin
+      select
+         accept Start (UI : in Athena_Nazar_UI; Interval : in Duration) do
+            Update_UI := UI;
+            Update_Interval := Interval;
+         end Start;
+      or
+         terminate;
+      end select;
+
+      loop
+         select
+            accept Stop;
+            exit;
+         or
+            accept Run_Update;
+            Athena.Updates.Run_Update;
+
+            Nazar.Main.With_Render_Lock
+              (Reload_Models'Access);
+
+         or
+            delay Update_Interval;
+            Athena.Updates.Run_Update;
+
+            Nazar.Main.With_Render_Lock
+              (Reload_Models'Access);
+
+         end select;
+      end loop;
+   end Update_Task;
 
 end Athena.UI.Nazar_UI;

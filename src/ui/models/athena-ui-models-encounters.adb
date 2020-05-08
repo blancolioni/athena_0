@@ -1,6 +1,7 @@
 with Ada.Text_IO;
 
 with Nazar.Colors;
+with Nazar.Main;
 
 with Athena.Elementary_Functions;
 with Athena.Options;
@@ -11,14 +12,24 @@ with Athena.Encounters.Sprites;
 
 package body Athena.UI.Models.Encounters is
 
+   type Root_Encounter_Model;
+   type Encounter_Model_Access is access all Root_Encounter_Model'Class;
+
+   task type Tick_Task is
+      entry Start (Model    : Encounter_Model_Access;
+                   Interval : Duration);
+      entry Stop;
+   end Tick_Task;
+
+   type Tick_Task_Access is access Tick_Task;
+
    type Root_Encounter_Model is
      new Nazar.Models.Draw.Root_Draw_Model with
       record
          Encounter    : Athena.Encounters.Manager.Encounter_Manager_Type;
          Current_Tick : Athena.Encounters.Encounter_Tick;
+         Ticker       : Tick_Task_Access;
       end record;
-
-   type Encounter_Model_Access is access all Root_Encounter_Model'Class;
 
    overriding function Background_Color
      (View : Root_Encounter_Model)
@@ -26,6 +37,9 @@ package body Athena.UI.Models.Encounters is
    is (0.0, 0.0, 0.0, 1.0);
 
    overriding procedure Reload
+     (Model : in out Root_Encounter_Model);
+
+   overriding procedure Unload
      (Model : in out Root_Encounter_Model);
 
    procedure Draw_Encounter
@@ -236,12 +250,16 @@ package body Athena.UI.Models.Encounters is
                    Encounter =>
                      Athena.Encounters.Manager.Load_Encounter
                        (Encounter),
-                   Current_Tick => 0);
+                   Current_Tick => 0,
+                   Ticker       => null);
    begin
       Ada.Text_IO.Put ("Loading encounter ... ");
       Ada.Text_IO.Flush;
 
       Model.Draw_Encounter;
+
+      Model.Ticker := new Tick_Task;
+      Model.Ticker.Start (Model, 0.1);
 
       Ada.Text_IO.Put_Line ("done");
 
@@ -260,26 +278,53 @@ package body Athena.UI.Models.Encounters is
       Model.Notify_Observers;
    end Reload;
 
+   ---------------
+   -- Tick_Task --
+   ---------------
+
+   task body Tick_Task is
+      Tick_Model  : Encounter_Model_Access;
+      Tick_Length : Duration;
+
+      procedure Reload;
+
+      ------------
+      -- Reload --
+      ------------
+
+      procedure Reload is
+      begin
+         Tick_Model.Reload;
+      end Reload;
+
+   begin
+      accept Start (Model    : Encounter_Model_Access;
+                    Interval : Duration)
+      do
+         Tick_Model := Model;
+         Tick_Length := Interval;
+      end Start;
+
+      loop
+         select
+            accept Stop;
+            exit;
+         or
+            delay Tick_Length;
+            Nazar.Main.With_Render_Lock (Reload'Access);
+         end select;
+      end loop;
+   end Tick_Task;
+
    ------------
-   -- Rotate --
+   -- Unload --
    ------------
 
---     function Rotate
---       (Pt     : Point;
---        Around : Point;
---        Angle  : Real)
---        return Point
---     is
---        Cos : constant Signed_Unit_Real :=
---                Athena.Elementary_Functions.Cos (Angle, 360.0);
---        Sin : constant Signed_Unit_Real :=
---                Athena.Elementary_Functions.Sin (Angle, 360.0);
---        X   : constant Real := Pt.X - Around.X;
---        Y   : constant Real := Pt.Y - Around.Y;
---     begin
---        return Point'
---          (X => Around.X + X * Cos - Y * Sin,
---           Y => Around.Y + X * Sin + Y * Cos);
---     end Rotate;
+   overriding procedure Unload
+     (Model : in out Root_Encounter_Model)
+   is
+   begin
+      Model.Ticker.Stop;
+   end Unload;
 
 end Athena.UI.Models.Encounters;
