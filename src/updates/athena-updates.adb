@@ -135,7 +135,8 @@ package body Athena.Updates is
         (For_Ship : Athena.Handles.Ship.Ship_Class)
       is
       begin
-         if Athena.Ships.Is_Armed (For_Ship)
+         if For_Ship.Alive
+           and then Athena.Ships.Is_Armed (For_Ship)
            and then not Present.Contains (For_Ship.Empire.Identifier)
            and then (For_Ship.Empire.Identifier = Colony.Empire.Identifier
                      or else Athena.Treaties.At_War
