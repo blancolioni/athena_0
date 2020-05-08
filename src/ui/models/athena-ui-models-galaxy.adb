@@ -366,7 +366,7 @@ package body Athena.UI.Models.Galaxy is
    begin
       return List : Empire_Ships_Lists.List do
          for Ship of Select_Where (Star = Around) loop
-            if not Ship.Destination.Has_Element then
+            if Ship.Alive and then not Ship.Destination.Has_Element then
                declare
                   Found : Boolean := False;
                begin
