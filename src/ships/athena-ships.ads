@@ -109,6 +109,11 @@ package Athena.Ships is
       Process  : not null access
         procedure (Ship : Athena.Handles.Ship.Ship_Class));
 
+   procedure For_All_Ships
+     (At_Star  : Athena.Handles.Star.Star_Class;
+      Process  : not null access
+        procedure (Ship : Athena.Handles.Ship.Ship_Class));
+
    function Select_Managed_Ships
      (Managed_By : Athena.Handles.Empire_Manager.Empire_Manager_Class)
       return Athena.Handles.Ship.Selections.Selection;

@@ -31,6 +31,15 @@ package body Athena.Knowledge.Stars is
      (Knowledge : in out Star_Knowledge'Class;
       Colony    : Athena.Handles.Colony.Colony_Class);
 
+   -----------------
+   -- Clear_Cache --
+   -----------------
+
+   procedure Clear_Cache is
+   begin
+      Cached_Knowledge_Map.Clear;
+   end Clear_Cache;
+
    ----------------------
    -- Clear_Colonizing --
    ----------------------

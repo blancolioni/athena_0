@@ -192,9 +192,33 @@ package body Athena.UI.Nazar_UI is
    procedure On_Update_Clicked
      (User_Data : Nazar.Signals.User_Data_Interface'Class)
    is
-      pragma Unreferenced (User_Data);
+      UI : Athena_Nazar_UI'Class renames
+             Athena_Nazar_UI'Class (User_Data);
+
+      procedure Reload_Models;
+
+      -------------------
+      -- Reload_Models --
+      -------------------
+
+      procedure Reload_Models is
+      begin
+         for Model of UI.Models loop
+            Model.Reload;
+         end loop;
+         UI.Galaxy_View.Set_Viewport
+           (UI.Galaxy_Model.Bounding_Box);
+      end Reload_Models;
+
    begin
-      Update_Task.Run_Update;
+      if Athena.Options.Auto_Update then
+         Update_Task.Run_Update;
+      else
+         Athena.Updates.Run_Update;
+
+         Nazar.Main.With_Render_Lock
+           (Reload_Models'Access);
+      end if;
    end On_Update_Clicked;
 
    -----------

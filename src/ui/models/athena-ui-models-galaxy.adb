@@ -239,10 +239,10 @@ package body Athena.UI.Models.Galaxy is
 
       Centre_Star : constant Athena.Handles.Star.Star_Class :=
                       Athena.Empires.Capital (Model.Empire);
-      Left        : Real := Centre_Star.X - 10.0;
-      Top         : Real := Centre_Star.Y - 10.0;
-      Right       : Real := Centre_Star.X + 10.0;
-      Bottom      : Real := Centre_Star.Y + 10.0;
+      Left        : Real := Centre_Star.X - 40.0;
+      Top         : Real := Centre_Star.Y - 40.0;
+      Right       : Real := Centre_Star.X + 40.0;
+      Bottom      : Real := Centre_Star.Y + 40.0;
       Voronoi     : Athena.Voronoi_Diagrams.Voronoi_Diagram;
    begin
 

@@ -1,4 +1,5 @@
 with WL.String_Maps;
+with WL.String_Sets;
 
 with Athena.Logging;
 with Athena.Money;
@@ -9,6 +10,7 @@ with Athena.Orders.Colonies;
 with Athena.Orders.Empires;
 with Athena.Orders.Ships;
 
+with Athena.Colonies;
 with Athena.Empires;
 with Athena.Ships.Updates;
 
@@ -60,6 +62,9 @@ package body Athena.Updates is
    procedure After_Production
      (Colony : Athena.Handles.Colony.Colony_Class);
 
+   procedure Check_Colony_Owner
+     (Colony : Athena.Handles.Colony.Colony_Class);
+
    procedure For_All_Colonies
      (Process : not null access
         procedure (Colony : Athena.Handles.Colony.Colony_Class));
@@ -102,6 +107,61 @@ package body Athena.Updates is
         .Set_Pop (Real'Min (New_Pop, Max_Pop))
         .Done;
    end Before_Production;
+
+   ------------------------
+   -- Check_Colony_Owner --
+   ------------------------
+
+   procedure Check_Colony_Owner
+     (Colony : Athena.Handles.Colony.Colony_Class)
+   is
+      Current_Owner : constant Athena.Handles.Empire.Empire_Class :=
+                        Colony.Empire;
+      New_Owner     : Athena.Handles.Empire.Empire_Handle :=
+                        Athena.Handles.Empire.Empty_Handle;
+      Star          : constant Athena.Handles.Star.Star_Class :=
+                        Colony.Star;
+      Present       : WL.String_Sets.Set;
+      Count         : Natural := 0;
+
+      procedure Record_Empire
+        (For_Ship : Athena.Handles.Ship.Ship_Class);
+
+      -------------------
+      -- Record_Empire --
+      -------------------
+
+      procedure Record_Empire
+        (For_Ship : Athena.Handles.Ship.Ship_Class)
+      is
+      begin
+         if Athena.Ships.Is_Armed (For_Ship)
+           and then not Present.Contains (For_Ship.Empire.Identifier)
+           and then (For_Ship.Empire.Identifier = Colony.Empire.Identifier
+                     or else Athena.Treaties.At_War
+                       (Colony.Empire, For_Ship.Empire))
+         then
+            Count := Count + 1;
+            Present.Include (For_Ship.Empire.Identifier);
+            if For_Ship.Empire.Identifier /= Current_Owner.Identifier then
+               New_Owner :=
+                 Athena.Handles.Empire.Get (For_Ship.Empire.Reference_Empire);
+            end if;
+         end if;
+      end Record_Empire;
+
+   begin
+      Athena.Ships.For_All_Ships
+        (Star, Record_Empire'Access);
+      if not Present.Contains (Current_Owner.Identifier)
+        and then Count = 1
+      then
+         Athena.Colonies.Capture_Colony (Colony, New_Owner);
+         Athena.Logging.Log
+           (New_Owner.Name & " captures colony on "
+            & Star.Name & " from " & Current_Owner.Name);
+      end if;
+   end Check_Colony_Owner;
 
    ------------------
    -- Debt_Service --
@@ -403,6 +463,8 @@ package body Athena.Updates is
       For_All_Colonies (After_Production'Access);
 
       Run_Encounters;
+
+      For_All_Colonies (Check_Colony_Owner'Access);
 
       For_All_Empires (Debt_Service'Access);
 

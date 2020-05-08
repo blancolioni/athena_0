@@ -11,6 +11,8 @@ with Athena.Real_Images;
 with Athena.Empires;
 with Athena.Stars;
 
+with Athena.Knowledge.Stars;
+
 with Athena.Handles.Colony.Selections;
 
 package body Athena.Colonies is
@@ -41,6 +43,7 @@ package body Athena.Colonies is
      new WL.String_Maps (Colony_Maps.Map, Colony_Maps."=");
 
    Colony_Vector : Colony_Vectors.Vector;
+   Colony_Map    : Colony_Maps.Map;
    Empire_Colony : Empire_Colony_Maps.Map;
    Star_Colony   : Colony_Maps.Map;
 
@@ -102,6 +105,25 @@ package body Athena.Colonies is
       end;
 
    end Can_Provide;
+
+   --------------------
+   -- Capture_Colony --
+   --------------------
+
+   procedure Capture_Colony
+     (Colony      : Athena.Handles.Colony.Colony_Class;
+      Captured_By : Athena.Handles.Empire.Empire_Class)
+   is
+   begin
+      Empire_Colony (Colony.Empire.Identifier).Delete (Colony.Identifier);
+      Empire_Colony (Captured_By.Identifier).Insert
+        (Colony.Identifier, Colony_Map (Colony.Identifier));
+      Colony.Update_Colony
+        .Set_Empire (Captured_By.Reference_Empire)
+        .Done;
+      Athena.Knowledge.Stars.Clear_Cache;
+
+   end Capture_Colony;
 
    -----------------
    -- Find_Colony --
@@ -179,6 +201,7 @@ package body Athena.Colonies is
       loop
          Colony_Vector.Append
            ((Handle => Athena.Handles.Colony.Get (Colony.Reference_Colony)));
+         Colony_Map.Insert (Colony.Identifier, Colony_Vector.Last_Index);
 
          Star_Colony.Insert (Colony.Identifier, Colony_Vector.Last_Index);
          if not Empire_Colony.Contains (Colony.Empire.Identifier) then
@@ -265,6 +288,7 @@ package body Athena.Colonies is
       Athena.Stars.Set_Colony (At_Star, Colony);
       Colony_Vector.Append
         ((Handle => Athena.Handles.Colony.Get (Colony.Reference_Colony)));
+      Colony_Map.Insert (Colony.Identifier, Colony_Vector.Last_Index);
 
       Star_Colony.Insert (Colony.Identifier, Colony_Vector.Last_Index);
       if not Empire_Colony.Contains (Owner.Identifier) then

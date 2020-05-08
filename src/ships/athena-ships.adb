@@ -382,6 +382,22 @@ package body Athena.Ships is
       end loop;
    end For_All_Ships;
 
+   -------------------
+   -- For_All_Ships --
+   -------------------
+
+   procedure For_All_Ships
+     (At_Star  : Athena.Handles.Star.Star_Class;
+      Process  : not null access
+        procedure (Ship : Athena.Handles.Ship.Ship_Class))
+   is
+      use Athena.Handles.Ship.Selections;
+   begin
+      for Ship of Select_Where (Star = At_Star) loop
+         Process (Ship);
+      end loop;
+   end For_All_Ships;
+
    ---------------
    -- Get_Drive --
    ---------------

@@ -46,6 +46,10 @@ package Athena.Colonies is
      (At_Star : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Colony.Colony_Class;
 
+   procedure Capture_Colony
+     (Colony      : Athena.Handles.Colony.Colony_Class;
+      Captured_By : Athena.Handles.Empire.Empire_Class);
+
    procedure New_Colony
      (At_Star : Athena.Handles.Star.Star_Class;
       Owner   : Athena.Handles.Empire.Empire_Class;
