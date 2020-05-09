@@ -13,6 +13,8 @@ with Athena.Turns;
 
 with Athena.Knowledge.Stars;
 
+with Athena.Handles.Encounter.Selections;
+
 with Athena.Handles.Journey.Selections;
 with Athena.Handles.Ship.Selections;
 with Athena.Handles.Star.Selections;
@@ -38,11 +40,12 @@ package body Athena.UI.Models.Galaxy is
 
    type Star_Record is
       record
-         Handle   : Athena.Handles.Star.Star_Handle;
-         Color    : Nazar.Colors.Nazar_Color;
-         X, Y     : Nazar.Nazar_Float;
-         Ships    : Empire_Ships_Lists.List;
-         Boundary : Point_Vectors.Vector;
+         Handle    : Athena.Handles.Star.Star_Handle;
+         Color     : Nazar.Colors.Nazar_Color;
+         X, Y      : Nazar.Nazar_Float;
+         Ships     : Empire_Ships_Lists.List;
+         Boundary  : Point_Vectors.Vector;
+         Encounter : Natural;
       end record;
 
    package Star_Record_Vectors is
@@ -59,11 +62,14 @@ package body Athena.UI.Models.Galaxy is
    package Journey_Lists is
       new Ada.Containers.Doubly_Linked_Lists (Journey_Record);
 
+   package Index_Maps is new WL.String_Maps (Positive);
+
    type Root_Galaxy_Model is
      new Nazar.Models.Draw.Root_Draw_Model with
       record
          Empire     : Athena.Handles.Empire.Empire_Handle;
          Stars      : Star_Record_Vectors.Vector;
+         Index_Map  : Index_Maps.Map;
          Journeys   : Journey_Lists.List;
       end record;
 
@@ -138,6 +144,17 @@ package body Athena.UI.Models.Galaxy is
       end loop;
 
       for Rec of Model.Stars loop
+
+         if Rec.Encounter > 0 then
+            Model.Save_State;
+            Model.Set_Fill (True);
+            Model.Set_Color (1.0, 0.31, 0.0, 1.0);
+            Model.Move_To (Rec.X, Rec.Y);
+            Model.Circle (Nazar.Nazar_Float (Rec.Encounter / 5 + 10));
+            Model.Render;
+            Model.Restore_State;
+         end if;
+
          Model.Save_State;
          Model.Set_Fill (True);
          Model.Move_To (Rec.X, Rec.Y);
@@ -234,9 +251,6 @@ package body Athena.UI.Models.Galaxy is
    procedure Load_Galaxy
      (Model : in out Root_Galaxy_Model'Class)
    is
-      package Index_Maps is new WL.String_Maps (Positive);
-      Index_Map : Index_Maps.Map;
-
       Centre_Star : constant Athena.Handles.Star.Star_Class :=
                       Athena.Empires.Capital (Model.Empire);
       Left        : Real := Centre_Star.X - 40.0;
@@ -254,12 +268,13 @@ package body Athena.UI.Models.Galaxy is
                Color : constant Nazar.Colors.Nazar_Color :=
                          (1.0, 1.0, 1.0, 1.0);
                Rec   : constant Star_Record := Star_Record'
-                 (Handle   => Star,
-                  Color    => Color,
-                  X        => Nazar.Nazar_Float (Star.X),
-                  Y        => Nazar.Nazar_Float (Star.Y),
-                  Ships    => <>,
-                  Boundary => <>);
+                 (Handle    => Star,
+                  Color     => Color,
+                  X         => Nazar.Nazar_Float (Star.X),
+                  Y         => Nazar.Nazar_Float (Star.Y),
+                  Encounter => 0,
+                  Ships     => <>,
+                  Boundary  => <>);
             begin
                Model.Stars.Append (Rec);
                Voronoi.Add_Point (Star.X, Star.Y);
@@ -269,12 +284,12 @@ package body Athena.UI.Models.Galaxy is
                   Right := Real'Max (Right, Star.X);
                   Bottom  := Real'Max (Bottom, Star.Y);
                end if;
-               if Index_Map.Contains (Star.Name) then
+               if Model.Index_Map.Contains (Star.Name) then
                   raise Constraint_Error with
                     "multiple systems called " & Star.Name;
                end if;
 
-               Index_Map.Insert (Star.Name, Model.Stars.Last_Index);
+               Model.Index_Map.Insert (Star.Name, Model.Stars.Last_Index);
             end;
          end loop;
 
@@ -301,6 +316,7 @@ package body Athena.UI.Models.Galaxy is
 
          for Rec of Model.Stars loop
             Rec.Ships := Orbiting_Ships (Rec.Handle);
+            Rec.Encounter := 0;
 
             if Knowledge.Visited (Rec.Handle) then
                Left := Real'Min (Left, Rec.Handle.X - 5.0);
@@ -308,6 +324,21 @@ package body Athena.UI.Models.Galaxy is
                Right := Real'Max (Right, Rec.Handle.X + 5.0);
                Bottom  := Real'Max (Bottom, Rec.Handle.Y + 5.0);
             end if;
+         end loop;
+      end;
+
+      declare
+         use Athena.Handles.Encounter.Selections;
+      begin
+         for Encounter of
+           Select_Where (Turn = Athena.Turns.Previous_Turn)
+         loop
+            declare
+               Name  : constant String := Encounter.Star.Name;
+               Index : constant Positive := Model.Index_Map (Name);
+            begin
+               Model.Stars (Index).Encounter := Encounter.Size;
+            end;
          end loop;
       end;
 
