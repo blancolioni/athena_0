@@ -144,7 +144,8 @@ package body Athena.Encounters.Manager is
                     Athena.Handles.Encounter.Create
                       (Identifier => Athena.Identifiers.Next_Identifier,
                        Turn       => Athena.Turns.Current_Turn,
-                       Star       => Star);
+                       Star       => Star,
+                       Size       => Natural (Ships.Length));
       Manager : Encounter_Manager_Type :=
                   Encounter_Manager_Type'
                     (Encounter => Encounter,
