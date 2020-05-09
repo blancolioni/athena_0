@@ -146,6 +146,11 @@ package body Athena.Managers.Attack is
          Can_Launch : Boolean := True;
       begin
 
+         if Fleet.Destination.Identifier = Star.Identifier then
+            Stop := False;
+            return;
+         end if;
+
          Log ("attack", For_Empire, "checking threat from "
               & Threat.Name & " at " & Star.Name
               & ": nearest colony on "
@@ -206,7 +211,6 @@ package body Athena.Managers.Attack is
       Destination : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Fleet.Fleet_Class
    is
-      pragma Unreferenced (Destination);
       use Athena.Handles.Fleet.Selections;
    begin
       for Fleet of Select_Where (Empire = For_Empire) loop
@@ -216,6 +220,10 @@ package body Athena.Managers.Attack is
             return Fleet;
          elsif not Fleet.Destination.Has_Element
            and then Fleet.Location.Identifier = Origin.Identifier
+         then
+            return Fleet;
+         elsif Fleet.Destination.Has_Element
+           and then Fleet.Destination.Identifier = Destination.Identifier
          then
             return Fleet;
          end if;
@@ -246,6 +254,10 @@ package body Athena.Managers.Attack is
             return Closest_F;
          end if;
       end;
+
+      Log ("attack", For_Empire,
+           "creating new fleet for attack from "
+           & Origin.Name & " to " & Destination.Name);
 
       return Athena.Handles.Fleet.Create
         (Identifier  => Athena.Identifiers.Next_Identifier,
