@@ -466,10 +466,21 @@ package body Athena.Ships is
       Rec : constant Ship_Record :=
               Ship_Vector.Element (All_Ships (On_Ship.Identifier));
    begin
-      Process (Rec.Drive.Component);
-      Process (Rec.Shield.Component);
-      Process (Rec.Cargo.Component);
-      Process (Rec.Repair.Component);
+      if Rec.Drive.Component.Has_Element then
+         Process (Rec.Drive.Component);
+      end if;
+
+      if Rec.Shield.Component.Has_Element then
+         Process (Rec.Shield.Component);
+      end if;
+
+      if Rec.Cargo.Component.Has_Element then
+         Process (Rec.Cargo.Component);
+      end if;
+
+      if Rec.Repair.Component.Has_Element then
+         Process (Rec.Repair.Component);
+      end if;
 
       for Component of Rec.Weapons loop
          Process (Component.Component);
