@@ -364,6 +364,81 @@ package body Athena.Ships.Updates is
    end Move_Ship;
 
    ------------
+   -- Repair --
+   ------------
+
+   procedure Repair
+     (Ship : Athena.Handles.Ship.Ship_Class)
+   is
+      use Athena.Handles.Ship_Component;
+      Component : constant Ship_Component_Class :=
+                           Get_Repair (Ship);
+   begin
+      if not Component.Has_Element then
+         return;
+      end if;
+
+      declare
+         Repair_Mass : Non_Negative_Real :=
+                         Component.Tec_Level * Component.Condition
+                           * Component.Design_Component.Mass;
+
+         procedure Repair_Component
+           (Damaged : Ship_Component_Class);
+
+         ----------------------
+         -- Repair_Component --
+         ----------------------
+
+         procedure Repair_Component
+           (Damaged : Ship_Component_Class)
+         is
+            Damage : constant Non_Negative_Real :=
+                       Damaged.Damage;
+            Mass     : constant Non_Negative_Real :=
+                         Damaged.Design_Component.Mass;
+            Repaired : constant Non_Negative_Real :=
+                         Real'Min (Damage, Repair_Mass / Damaged.Tec_Level);
+            New_Condition : constant Unit_Real :=
+                              (1.0 - ((Damage - Repaired) / Mass) ** 2);
+         begin
+            if Repaired > 0.0 then
+               Athena.Logging.Log
+                 (Ship.Empire.Name & " ship " & Ship.Name
+                  & " repairs " & Image (Repaired)
+                  & "/" & Image (Damage)
+                  & " damage to "
+                  & Damaged.Ship.Name
+                  & " "
+                  & Damaged.Component.Tag);
+               Damaged.Update_Ship_Component
+                 .Set_Damage (Damage - Repaired)
+                 .Set_Condition (New_Condition)
+                 .Done;
+               Repair_Mass := Repair_Mass - Repaired;
+            end if;
+         end Repair_Component;
+
+      begin
+         Iterate_Components (Ship, Repair_Component'Access);
+
+         declare
+            use Athena.Handles.Ship.Selections;
+         begin
+            for Neighbour of
+              Select_Where (Star = Ship.Star and Empire = Ship.Empire)
+            loop
+               if Neighbour.Identifier /= Ship.Identifier
+                 and then not Get_Repair (Neighbour).Has_Element
+               then
+                  Iterate_Components (Neighbour, Repair_Component'Access);
+               end if;
+            end loop;
+         end;
+      end;
+   end Repair;
+
+   ------------
    -- Update --
    ------------
 

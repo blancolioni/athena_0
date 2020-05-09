@@ -412,6 +412,19 @@ package body Athena.Ships is
    end Get_Drive;
 
    ----------------
+   -- Get_Repair --
+   ----------------
+
+   function Get_Repair
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class
+   is
+   begin
+      return Ship_Vector (All_Ships.Element (Of_Ship.Identifier))
+        .Repair.Component;
+   end Get_Repair;
+
+   ----------------
    -- Get_Shield --
    ----------------
 

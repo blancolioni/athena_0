@@ -433,6 +433,8 @@ package body Athena.Updates is
 
       For_All_Empires (Fleet_Cost'Access);
 
+      Athena.Ships.For_All_Ships (Athena.Ships.Updates.Repair'Access);
+
       Athena.Managers.Run_Managers;
 
       For_All_Colonies (Before_Production'Access);

@@ -41,6 +41,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Athena.Handles.Ship_Component.Ship_Component_Class;
 
+   function Get_Repair
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Athena.Handles.Ship_Component.Ship_Component_Class;
+
    function Is_Armed
      (Ship : Athena.Handles.Ship.Ship_Class)
       return Boolean;

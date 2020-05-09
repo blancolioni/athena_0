@@ -9,6 +9,7 @@ components = {
     missile = 10
     missile = 10
     missile = 10
+    repair = 20
 }
 
 default-script = attack
