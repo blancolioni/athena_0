@@ -49,6 +49,10 @@ package Athena.Ships is
      (Ship : Athena.Handles.Ship.Ship_Class)
       return Boolean;
 
+   function Weapon_Range
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real;
+
    function Design_Mass
      (Of_Design : Athena.Handles.Ship_Design.Ship_Design_Class)
       return Non_Negative_Real;
@@ -78,6 +82,10 @@ package Athena.Ships is
    procedure Get_Ships
      (In_Fleet : Athena.Handles.Fleet.Fleet_Class;
       Ships    : out Ship_Lists.List);
+
+   function Fleet_Mass
+     (Of_Fleet : Athena.Handles.Fleet.Fleet_Class)
+      return Non_Negative_Real;
 
    procedure On_Arrival
      (Arriving_Ship : Athena.Handles.Ship.Ship_Class);

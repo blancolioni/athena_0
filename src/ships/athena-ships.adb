@@ -10,6 +10,8 @@ with Athena.Real_Images;
 with Athena.Empires;
 with Athena.Technology;
 
+with Athena.Encounters;
+
 with Athena.Handles.Design_Component.Selections;
 with Athena.Handles.Fleet.Selections;
 with Athena.Handles.Ship_Component.Selections;
@@ -334,6 +336,24 @@ package body Athena.Ships is
         .Set_Alive (False)
         .Done;
    end Destroy;
+
+   ----------------
+   -- Fleet_Mass --
+   ----------------
+
+   function Fleet_Mass
+     (Of_Fleet : Athena.Handles.Fleet.Fleet_Class)
+      return Non_Negative_Real
+   is
+      Ships : Ship_Lists.List;
+   begin
+      Get_Ships (Of_Fleet, Ships);
+      return Result : Non_Negative_Real := 0.0 do
+         for Ship of Ships loop
+            Result := Result + Mass (Ship);
+         end loop;
+      end return;
+   end Fleet_Mass;
 
    --------------------
    -- For_All_Fleets --
@@ -794,5 +814,35 @@ package body Athena.Ships is
       end case;
 
    end Upgrade_Component;
+
+   ------------------
+   -- Weapon_Range --
+   ------------------
+
+   function Weapon_Range
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real
+   is
+      Max_Range : Non_Negative_Real := 0.0;
+
+      procedure Update_Range
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class);
+
+      ------------------
+      -- Update_Range --
+      ------------------
+
+      procedure Update_Range
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class)
+      is
+      begin
+         Max_Range := Real'Max (Athena.Encounters.Maximum_Range (Weapon),
+                                Max_Range);
+      end Update_Range;
+
+   begin
+      Iterate_Weapons (Ship, Update_Range'Access);
+      return Max_Range;
+   end Weapon_Range;
 
 end Athena.Ships;
