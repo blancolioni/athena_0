@@ -92,6 +92,11 @@ package body Athena.UI.Models.Encounters is
    procedure Draw_Encounter
      (Model : in out Root_Encounter_Model'Class)
    is
+      Left   : Real := -1000.0;
+      Right  : Real := 1000.0;
+      Top    : Real := -1000.0;
+      Bottom : Real := 1000.0;
+
       procedure Process_Sprite
         (Sprite : Athena.Encounters.Sprites.Sprite_Type);
 
@@ -102,8 +107,14 @@ package body Athena.UI.Models.Encounters is
       procedure Process_Sprite
         (Sprite : Athena.Encounters.Sprites.Sprite_Type)
       is
+         Location : constant Athena.Encounters.Encounter_Point :=
+                      Athena.Encounters.Sprites.Location (Sprite);
       begin
          Model.Draw_Sprite (Sprite);
+         Left := Real'Min (Left, Location.X);
+         Right := Real'Max (Right, Location.X);
+         Top := Real'Min (Top, Location.Y);
+         Bottom := Real'Max (Bottom, Location.Y);
       end Process_Sprite;
 
    begin
@@ -114,10 +125,14 @@ package body Athena.UI.Models.Encounters is
          Process => Process_Sprite'Access);
 
       declare
-         use type Nazar.Nazar_Float;
+         use Nazar;
       begin
          Model.Set_Bounding_Box
-           (Box => (-1200.0, -1200.0, 2400.0, 2400.0));
+           (Box => Rectangle'
+              (X => Nazar_Float (Left - 100.0),
+               Y => Nazar_Float (Top - 100.0),
+               W => Nazar_Float (Right - Left + 200.0),
+               H => Nazar_Float (Bottom - Top + 200.0)));
       end;
 
       declare
