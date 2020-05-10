@@ -86,6 +86,21 @@ record Empire_Capital is
     key Star;
 end Empire_Capital;
 
+record Relationship is
+    key From    : Empire;
+    To          : Empire;
+    Opinion     : Integer;
+    War         : Boolean;
+    Hostile     : Boolean;
+    Allied      : Boolean;
+    Trade       : Boolean;
+    unique key Relationship with From, To;
+    key Allies   with From, Allied;
+    key Hostiles with From, Hostile;
+    key Enemies  with From, War;
+    key Traders  with From, Trade;
+end Relationship;
+
 record Star_Distance is
     key From : Star;
     To : Star;
