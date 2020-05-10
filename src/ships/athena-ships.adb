@@ -11,12 +11,12 @@ with Athena.Empires;
 with Athena.Technology;
 
 with Athena.Encounters;
+with Athena.Knowledge.Stars;
 
 with Athena.Handles.Design_Component.Selections;
 with Athena.Handles.Fleet.Selections;
 with Athena.Handles.Ship_Component.Selections;
 with Athena.Handles.Ship_Order;
-with Athena.Handles.Star_Knowledge.Selections;
 
 with Athena.Db.Fleet;
 with Athena.Db.Ship;
@@ -700,20 +700,26 @@ package body Athena.Ships is
    procedure On_Arrival
      (Arriving_Ship : Athena.Handles.Ship.Ship_Class)
    is
-      use Athena.Handles.Star_Knowledge;
-      use Athena.Handles.Star_Knowledge.Selections;
-      Knowledge : constant Star_Knowledge_Handle :=
-                    First_Where (Empire = Arriving_Ship.Empire
-                                  and Star = Arriving_Ship.Star);
    begin
-      if not Knowledge.Has_Element then
-         Create (Arriving_Ship.Star, Arriving_Ship.Empire, True, False);
-      elsif not Knowledge.Visited then
-         Knowledge.Update_Star_Knowledge
-           .Set_Visited (True)
-           .Done;
-      end if;
+      Athena.Knowledge.Stars.Visit
+        (Empire => Arriving_Ship.Empire,
+         Star   => Arriving_Ship.Star);
    end On_Arrival;
+
+--        use Athena.Handles.Star_Knowledge;
+--        use Athena.Handles.Star_Knowledge.Selections;
+--        Knowledge : constant Star_Knowledge_Handle :=
+--                      First_Where (Empire = Arriving_Ship.Empire
+--                                    and Star = Arriving_Ship.Star);
+--     begin
+--        if not Knowledge.Has_Element then
+--           Create (Arriving_Ship.Star, Arriving_Ship.Empire, True, False);
+--        elsif not Knowledge.Visited then
+--           Knowledge.Update_Star_Knowledge
+--             .Set_Visited (True)
+--             .Done;
+--        end if;
+--     end On_Arrival;
 
    --------------------------
    -- Select_Managed_Ships --

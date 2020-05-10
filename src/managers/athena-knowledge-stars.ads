@@ -55,6 +55,10 @@ package Athena.Knowledge.Stars is
      (Empire     : Athena.Handles.Empire.Empire_Class;
       Star       : Athena.Handles.Star.Star_Class);
 
+   procedure Visit
+     (Empire : Athena.Handles.Empire.Empire_Class;
+      Star   : Athena.Handles.Star.Star_Class);
+
    procedure Clear_Cache;
 
 private

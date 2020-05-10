@@ -351,4 +351,45 @@ package body Athena.Knowledge.Stars is
 
    end Update_Neighbours;
 
+   -----------
+   -- Visit --
+   -----------
+
+   procedure Visit
+     (Empire : Athena.Handles.Empire.Empire_Class;
+      Star   : Athena.Handles.Star.Star_Class)
+   is
+      Knowledge : Star_Knowledge;
+   begin
+      Knowledge.Load (Empire);
+
+      if not Knowledge.Visited.Contains (Star.Identifier) then
+         declare
+            use type Athena.Db.Star_Knowledge_Reference;
+            K : constant Athena.Db.Star_Knowledge_Reference :=
+                  Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
+                    (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+         begin
+            if K = Athena.Db.Null_Star_Knowledge_Reference then
+               Athena.Handles.Star_Knowledge.Create
+                 (Star       => Star,
+                  Empire     => Knowledge.Empire,
+                  Visited    => True,
+                  Colonizing => False);
+            else
+               Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+                 .Set_Visited (True)
+                 .Done;
+            end if;
+
+            Knowledge.Visited.Insert (Star.Identifier, Star);
+
+            Cached_Knowledge_Map.Replace
+              (Knowledge.Empire.Identifier,
+               (Athena.Turns.Current_Turn, Knowledge));
+         end;
+      end if;
+
+   end Visit;
+
 end Athena.Knowledge.Stars;
