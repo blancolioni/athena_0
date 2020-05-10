@@ -403,14 +403,14 @@ package body Athena.Ships.Updates is
                               (1.0 - ((Damage - Repaired) / Mass) ** 2);
          begin
             if Repaired > 0.0 then
-               Athena.Logging.Log
-                 (Ship.Empire.Name & " ship " & Ship.Name
-                  & " repairs " & Image (Repaired)
-                  & "/" & Image (Damage)
-                  & " damage to "
-                  & Damaged.Ship.Name
-                  & " "
-                  & Damaged.Component.Tag);
+--                 Athena.Logging.Log
+--                   (Ship.Empire.Name & " ship " & Ship.Name
+--                    & " repairs " & Image (Repaired)
+--                    & "/" & Image (Damage)
+--                    & " damage to "
+--                    & Damaged.Ship.Name
+--                    & " "
+--                    & Damaged.Component.Tag);
                Damaged.Update_Ship_Component
                  .Set_Damage (Damage - Repaired)
                  .Set_Condition (New_Condition)
