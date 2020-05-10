@@ -35,6 +35,7 @@ package body Athena.UI.Nazar_UI is
          Top               : Nazar.Views.Nazar_View;
          Models            : Model_Lists.List;
          Encounter_Model   : Nazar.Models.Draw.Nazar_Draw_Model;
+         Encounter_View    : Nazar.Views.Draw.Nazar_Draw_View;
          Turn_Model        : Nazar.Models.Text.Nazar_Text_Model;
          Encounter_Control : Nazar.Controllers.Draw.
            Nazar_Draw_Controller_Record;
@@ -99,12 +100,12 @@ package body Athena.UI.Nazar_UI is
            Athena.UI.Models.Encounters.Encounter_Model (Encounter);
          Result.Models.Append
            (Nazar.Models.Nazar_Model (Result.Encounter_Model));
-
+         Result.Encounter_View :=
+           Nazar.Views.Draw.Nazar_Draw_View
+             (Builder.Get_View ("encounter"));
          Result.Encounter_Control.Start_Draw
            (Model => Result.Encounter_Model,
-            View  =>
-              Nazar.Views.Draw.Nazar_Draw_View
-                (Builder.Get_View ("encounter")));
+            View  => Result.Encounter_View);
       end return;
    end Get_Encounter_UI;
 
@@ -183,6 +184,8 @@ package body Athena.UI.Nazar_UI is
       for Model of UI.Models loop
          Model.Reload;
       end loop;
+      UI.Encounter_View.Set_Viewport
+        (UI.Encounter_Model.Bounding_Box);
    end Next_Encounter_Tick;
 
    -----------------------
