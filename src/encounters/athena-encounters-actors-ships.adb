@@ -413,7 +413,7 @@ package body Athena.Encounters.Actors.Ships is
       return String
    is
    begin
-      return Ship.Ship.Empire.Name
+      return Ship.Ship.Empire.Adjective
         & " ship " & Ship.Ship.Identifier
         & " " & Ship.Ship.Name;
 --          & ": location (" & Image (Ship.Location.X)
