@@ -7,8 +7,7 @@ with Athena.Handles.Ship_Component;
 
 package Athena.Encounters is
 
-   Max_Ticks        : constant := 1_000;
-   Encounter_Radius : constant := 1_000.0;
+   Max_Ticks        : constant := 2_000;
 
    type Encounter_Actor_Reference is private;
 

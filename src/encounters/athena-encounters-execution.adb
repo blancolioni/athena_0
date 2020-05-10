@@ -332,6 +332,7 @@ package body Athena.Encounters.Execution is
 
       procedure Deploy
         (Team    : Team_Record;
+         Radius  : Non_Negative_Real;
          Bearing : Athena.Trigonometry.Angle);
 
       package Participant_Maps is
@@ -346,13 +347,14 @@ package body Athena.Encounters.Execution is
 
       procedure Deploy
         (Team    : Team_Record;
+         Radius  : Non_Negative_Real;
          Bearing : Athena.Trigonometry.Angle)
       is
          use Athena.Trigonometry;
          use Athena.Random;
          Ships : constant Athena.Ships.Ship_Lists.List := Team.Ships;
-         X     : constant Real := Encounter_Radius * Cos (Bearing);
-         Y     : constant Real := Encounter_Radius * Sin (Bearing);
+         X     : constant Real := Radius * Cos (Bearing);
+         Y     : constant Real := Radius * Sin (Bearing);
       begin
          for Ship of Ships loop
             State.Actors.Append
@@ -360,8 +362,8 @@ package body Athena.Encounters.Execution is
                  (Index   => State.Actors.Last_Index + 1,
                   Tick    => 0,
                   Ship    => Ship,
-                  X       => X + Normal_Random (Encounter_Radius / 20.0),
-                  Y       => Y + Normal_Random (Encounter_Radius / 20.0),
+                  X       => X + Normal_Random (Radius / 20.0),
+                  Y       => Y + Normal_Random (Radius / 20.0),
                   Heading => Bearing + From_Degrees (180.0)));
             State.Scripts.Append
               (Athena.Ships.Scripts.Get_Script
@@ -369,6 +371,8 @@ package body Athena.Encounters.Execution is
             Manager.Add_Actor (State.Actors.Last_Element);
          end loop;
       end Deploy;
+
+      Encounter_Radius : Non_Negative_Real := 0.0;
 
    begin
 
@@ -392,10 +396,13 @@ package body Athena.Encounters.Execution is
                Handle : constant Athena.Handles.Ship.Ship_Handle :=
                           Athena.Handles.Ship.Get
                             (Participant.Ship.Reference_Ship);
+               Weapon_Range : constant Non_Negative_Real :=
+                                Athena.Ships.Weapon_Range (Handle);
             begin
                State.Teams (Participant.Ship.Empire.Identifier)
                  .Ships.Append (Handle);
                Participants.Insert (Handle.Identifier, Participant);
+               Encounter_Radius := Real'Max (Weapon_Range, Encounter_Radius);
             end;
          end loop;
       end;
@@ -419,7 +426,7 @@ package body Athena.Encounters.Execution is
                   & "; speed " & Image (Athena.Ships.Speed (Ship))
                   & "; experience " & Image (Ship.Experience));
             end loop;
-            Deploy (Team, Current_Angle);
+            Deploy (Team, Encounter_Radius, Current_Angle);
             Current_Angle := Current_Angle + Angular_Sep;
          end loop;
       end;
