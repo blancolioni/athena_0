@@ -4,6 +4,7 @@ with Athena.Orders;
 with Athena.Ships;
 with Athena.Stars;
 with Athena.Technology;
+with Athena.Turns;
 
 with Athena.Knowledge.Stars;
 
@@ -175,18 +176,21 @@ package body Athena.Managers.Attack is
             then
                if Ship.Star.Identifier /= Nearest.Star.Identifier then
                   Athena.Ships.Move_To (Ship, Nearest.Star);
-                  Can_Launch := False;
                elsif Fleet.Location.Identifier = Nearest.Star.Identifier then
                   Ship.Update_Ship.Set_Fleet (Fleet.Reference_Fleet).Done;
                end if;
             elsif Ship.Destination.Has_Element
               and then Ship.Destination.Identifier = Nearest.Star.Identifier
             then
-               Can_Launch := False;
+               null;
+               --  Can_Launch := False;
             end if;
          end loop;
 
-         if Can_Launch then
+         if Can_Launch
+           and then Athena.Ships.Fleet_Mass (Fleet)
+           > Real (Athena.Turns.Current_Turn * 10)
+         then
             Athena.Orders.Move_Fleet (Fleet, Star);
          end if;
 
