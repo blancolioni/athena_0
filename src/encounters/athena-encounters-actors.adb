@@ -182,7 +182,9 @@ package body Athena.Encounters.Actors is
                           Athena.Elementary_Functions.Sqrt
                             (DX ** 2 + DY ** 2);
             Target_Heading : constant Athena.Trigonometry.Angle :=
-                               Athena.Trigonometry.Arctan (DY, DX);
+                               (if DX = 0.0 and then DY = 0.0
+                                then Actor.Heading
+                                else Athena.Trigonometry.Arctan (DY, DX));
             Bearing   : constant Athena.Trigonometry.Angle :=
                             Target_Heading - Actor.Heading;
             Turn      : constant Non_Negative_Real := Speed / 5.0;
