@@ -164,8 +164,8 @@ package body Athena.Ships.Attack is
                           (H.DX ** 2 + H.DY ** 2);
                begin
 
-                  if Athena.Encounters.Hit_Chance (Weapon, H.Size, R)
-                    > 0.75
+                  if Athena.Encounters.Hit_Chance (Weapon, H.Size, R) > 0.5
+                    or else R < Athena.Encounters.Maximum_Range (Weapon) / 2.0
                   then
                      Situation.Fire_Weapon
                        (Weapon => Weapon,
