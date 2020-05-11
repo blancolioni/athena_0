@@ -5,6 +5,7 @@ with Athena.Colonies;
 with Athena.Stars;
 
 with Athena.Handles.Star_Knowledge;
+with Athena.Handles.Turn;
 
 with Athena.Db.Star_Knowledge;
 
@@ -30,6 +31,11 @@ package body Athena.Knowledge.Stars is
    procedure Update_Neighbours
      (Knowledge : in out Star_Knowledge'Class;
       Colony    : Athena.Handles.Colony.Colony_Class);
+
+   function Get_Knowledge_Reference
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      For_Star   : Athena.Handles.Star.Star_Class)
+      return Athena.Db.Star_Knowledge_Reference;
 
    -----------------
    -- Clear_Cache --
@@ -60,6 +66,36 @@ package body Athena.Knowledge.Stars is
       end if;
 
    end Clear_Colonizing;
+
+   -----------------------------
+   -- Get_Knowledge_Reference --
+   -----------------------------
+
+   function Get_Knowledge_Reference
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      For_Star   : Athena.Handles.Star.Star_Class)
+      return Athena.Db.Star_Knowledge_Reference
+   is
+      use Athena.Db;
+      K : constant Star_Knowledge_Reference :=
+            Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
+              (For_Star.Reference_Star, For_Empire.Reference_Empire);
+   begin
+      if K = Null_Star_Knowledge_Reference then
+         return Athena.Handles.Star_Knowledge.Create
+           (Star       => For_Star,
+            Empire     => For_Empire,
+            Owner      => Athena.Handles.Empire.Empty_Handle,
+            Last_Visit => Athena.Handles.Turn.Empty_Handle,
+            Last_Pop   => 0.0,
+            Last_Ind   => 0.0,
+            Visited    => False,
+            Colonizing => False)
+           .Reference_Star_Knowledge;
+      else
+         return K;
+      end if;
+   end Get_Knowledge_Reference;
 
    ------------------------
    -- Iterate_Neighbours --
@@ -257,22 +293,13 @@ package body Athena.Knowledge.Stars is
       Star       : Athena.Handles.Star.Star_Class;
       Colonizing : Boolean)
    is
-      use type Athena.Db.Star_Knowledge_Reference;
       K : constant Athena.Db.Star_Knowledge_Reference :=
-            Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
-              (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+            Get_Knowledge_Reference
+              (Knowledge.Empire, Star);
    begin
-      if K = Athena.Db.Null_Star_Knowledge_Reference then
-         Athena.Handles.Star_Knowledge.Create
-           (Star       => Star,
-            Empire     => Knowledge.Empire,
-            Visited    => False,
-            Colonizing => Colonizing);
-      else
-         Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
-           .Set_Colonizing (Colonizing)
-           .Done;
-      end if;
+      Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+        .Set_Colonizing (Colonizing)
+        .Done;
 
       if Colonizing then
          Knowledge.Colonizing.Insert (Star.Identifier, Star);
@@ -365,22 +392,26 @@ package body Athena.Knowledge.Stars is
 
       if not Knowledge.Visited.Contains (Star.Identifier) then
          declare
-            use type Athena.Db.Star_Knowledge_Reference;
             K : constant Athena.Db.Star_Knowledge_Reference :=
-                  Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
-                    (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+                  Get_Knowledge_Reference (Knowledge.Empire, Star);
+            Colony : constant Athena.Handles.Colony.Colony_Class :=
+                       Athena.Colonies.Get_Colony (Star);
+            Owner  : constant Athena.Db.Empire_Reference :=
+                       (if Star.Owner.Has_Element
+                        then Star.Owner.Reference_Empire
+                        else Athena.Db.Null_Empire_Reference);
+            Pop : constant Non_Negative_Real :=
+                    (if Colony.Has_Element then Colony.Pop else 0.0);
+            Ind : constant Non_Negative_Real :=
+                    (if Colony.Has_Element then Colony.Industry else 0.0);
          begin
-            if K = Athena.Db.Null_Star_Knowledge_Reference then
-               Athena.Handles.Star_Knowledge.Create
-                 (Star       => Star,
-                  Empire     => Knowledge.Empire,
-                  Visited    => True,
-                  Colonizing => False);
-            else
-               Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
-                 .Set_Visited (True)
-                 .Done;
-            end if;
+            Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+              .Set_Visited (True)
+              .Set_Last_Visit (Athena.Turns.Current_Turn.Reference_Turn)
+              .Set_Owner (Owner)
+              .Set_Last_Pop (Pop)
+              .Set_Last_Ind (Ind)
+              .Done;
 
             Knowledge.Visited.Insert (Star.Identifier, Star);
 

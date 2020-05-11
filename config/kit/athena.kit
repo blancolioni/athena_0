@@ -111,11 +111,27 @@ end Star_Distance;
 record Star_Knowledge is
     key Star;
     key Empire;
+    Owner       : Empire;
+    Last_Visit  : Turn;
+    Last_Pop    : Long_Float;
+    Last_Ind    : Long_Float;
     Visited     : Boolean;
     Colonizing  : Boolean;
     unique key Star_Knowledge with Star, Empire;
 end Star_Knowledge;
-    
+
+record Ship_Knowledge is
+    key Star_Knowledge;
+    Owner : Empire;
+    Turn;
+    Identifier  : Fixed_String (8);
+    Name        : String (32);
+    Mass        : Long_Float;
+    Weapon_Mass : Long_Float;
+    Drive_Mass  : Long_Float;
+    key Ship_Knowledge with Star_Knowledge, Turn;
+end Ship_Knowledge;
+
 record Fleet : Has_Identifier, Has_Name is
     key Empire;
     key Manager : Empire_Manager;
