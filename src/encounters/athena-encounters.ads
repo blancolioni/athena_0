@@ -9,6 +9,8 @@ package Athena.Encounters is
 
    Max_Ticks        : constant := 2_000;
 
+   type Deployment_Rank is range 1 .. 9;
+
    type Encounter_Actor_Reference is private;
 
    type Encounter_Actor_Class is
