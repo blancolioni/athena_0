@@ -3,3 +3,4 @@ components = {
 }
 
 default-script = escape
+default-rank = 9

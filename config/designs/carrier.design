@@ -10,3 +10,4 @@ components = {
 }
 
 default-script = attack
+default-rank = 6

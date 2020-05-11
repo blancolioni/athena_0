@@ -34,7 +34,8 @@ package body Athena.Configure.Designs is
                    (Identifier     => Id,
                     Name           => To_Name (Name),
                     Empire         => Empire,
-                    Default_Script => Config.Get ("default-script", "escape"));
+                    Default_Script => Config.Get ("default-script", "escape"),
+                    Default_Rank   => Config.Get ("default-rank", 5));
 
       function Get_Component
         (T : String)
