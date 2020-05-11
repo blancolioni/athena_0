@@ -290,7 +290,7 @@ package body Athena.Colonies is
         ((Handle => Athena.Handles.Colony.Get (Colony.Reference_Colony)));
       Colony_Map.Insert (Colony.Identifier, Colony_Vector.Last_Index);
 
-      Star_Colony.Insert (Colony.Identifier, Colony_Vector.Last_Index);
+      Star_Colony.Insert (At_Star.Identifier, Colony_Vector.Last_Index);
       if not Empire_Colony.Contains (Owner.Identifier) then
          Empire_Colony.Insert (Owner.Identifier, Colony_Maps.Empty_Map);
       end if;
