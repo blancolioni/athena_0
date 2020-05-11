@@ -6,6 +6,8 @@ with Athena.Logging;
 with Athena.Random;
 with Athena.Trigonometry;
 
+with Athena.Ships.Escape;
+
 package body Athena.Ships.Attack is
 
    type Attack_Script_Type is
@@ -42,9 +44,9 @@ package body Athena.Ships.Attack is
       return Script : Attack_Script_Type;
    end Attack_Script;
 
-   ----------------
-   -- Get_Orders --
-   ----------------
+   ------------
+   -- Update --
+   ------------
 
    overriding procedure Update
      (Script    : Attack_Script_Type;
@@ -127,6 +129,13 @@ package body Athena.Ships.Attack is
 
          begin
             Actor.Iterate_Beam_Weapons (Check_Weapon'Access);
+
+            if Total_Weight = 0.0 then
+               Athena.Ships.Escape.Escape_Script.Update
+                 (Actor, Situation);
+               return;
+            end if;
+
             Actor.Follow (Hostiles.First_Element, Bearing, Ideal_Range);
             Athena.Logging.Log
               (Actor.Image & ": following hostile at range"
