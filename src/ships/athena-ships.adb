@@ -82,6 +82,19 @@ package body Athena.Ships is
         function (Name : String) return Boolean)
       return String;
 
+   --------------------
+   -- Add_Experience --
+   --------------------
+
+   procedure Add_Experience
+     (To_Ship : Athena.Handles.Ship.Ship_Class;
+      XP      : Non_Negative_Real)
+   is
+      Old_XP : constant Non_Negative_Real := To_Ship.Experience;
+   begin
+      To_Ship.Update_Ship.Set_Experience (Old_XP + XP).Done;
+   end Add_Experience;
+
    ---------------
    -- Add_Order --
    ---------------

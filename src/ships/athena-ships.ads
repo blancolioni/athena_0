@@ -135,6 +135,10 @@ package Athena.Ships is
       Base_Name : String)
       return String;
 
+   procedure Add_Experience
+     (To_Ship : Athena.Handles.Ship.Ship_Class;
+      XP      : Non_Negative_Real);
+
    function Name_Fleet
      (Owner     : Athena.Handles.Empire.Empire_Class;
       Base_Name : String)

@@ -157,7 +157,11 @@ package body Athena.Encounters.Execution is
       Situation.Actor.Weapon_Fired (Weapon);
 
       if Hit then
+         Athena.Ships.Add_Experience (Weapon.Ship, 0.005);
          Actor.Hit (Damage);
+         if Actor.Is_Dead then
+            Athena.Ships.Add_Experience (Weapon.Ship, 0.01);
+         end if;
       end if;
 
       Log
