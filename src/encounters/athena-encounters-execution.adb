@@ -351,25 +351,88 @@ package body Athena.Encounters.Execution is
          Bearing : Athena.Trigonometry.Angle)
       is
          use Athena.Trigonometry;
-         use Athena.Random;
          Ships : constant Athena.Ships.Ship_Lists.List := Team.Ships;
-         X     : constant Real := Radius * Cos (Bearing);
-         Y     : constant Real := Radius * Sin (Bearing);
+         Ranks : array (Deployment_Rank) of Athena.Ships.Ship_Lists.List;
+
+         procedure Deploy_Rank
+           (Ships    : Athena.Ships.Ship_Lists.List;
+            Distance : in out Non_Negative_Real);
+
+         -----------------
+         -- Deploy_Rank --
+         -----------------
+
+         procedure Deploy_Rank
+           (Ships    : Athena.Ships.Ship_Lists.List;
+            Distance : in out Non_Negative_Real)
+         is
+            Max_Width     : constant := 12;
+            Separation    : constant := 1.0;
+            Rank_Distance : constant := 50.0;
+            List        : Athena.Ships.Ship_Lists.List := Ships;
+         begin
+
+            while not List.Is_Empty loop
+               declare
+                  Rank_Length : constant Positive :=
+                                  Positive'Min (Positive (List.Length),
+                                                Max_Width);
+                  Offset      : constant Real :=
+                                  (Real (Rank_Length) / 2.0 - 0.5)
+                                  * Separation;
+                  Theta       : Angle :=
+                                  Bearing - From_Degrees (Offset);
+               begin
+                  for I in 1 .. Rank_Length loop
+                     declare
+                        Ship : constant Athena.Handles.Ship.Ship_Handle :=
+                                 List.First_Element;
+                        X    : constant Real := Distance * Cos (Theta);
+                        Y    : constant Real := Distance * Sin (Theta);
+                     begin
+                        List.Delete_First;
+                        State.Actors.Append
+                          (Athena.Encounters.Actors.Create_Ship_Actor
+                             (Index   => State.Actors.Last_Index + 1,
+                              Tick    => 0,
+                              Ship    => Ship,
+                              X       => X,
+                              Y       => Y,
+                              Heading => Bearing + From_Degrees (180.0)));
+                        State.Scripts.Append
+                          (Athena.Ships.Scripts.Get_Script
+                             (Ship.Script));
+                        Manager.Add_Actor (State.Actors.Last_Element);
+                        Athena.Ships.Add_Experience (Ship, 0.01);
+
+                        Theta := Theta + From_Degrees (Separation);
+                     end;
+                  end loop;
+               end;
+               Distance := Distance + Rank_Distance;
+            end loop;
+         end Deploy_Rank;
+
       begin
          for Ship of Ships loop
-            State.Actors.Append
-              (Athena.Encounters.Actors.Create_Ship_Actor
-                 (Index   => State.Actors.Last_Index + 1,
-                  Tick    => 0,
-                  Ship    => Ship,
-                  X       => X + Normal_Random (Radius / 20.0),
-                  Y       => Y + Normal_Random (Radius / 20.0),
-                  Heading => Bearing + From_Degrees (180.0)));
-            State.Scripts.Append
-              (Athena.Ships.Scripts.Get_Script
-                 (Ship.Script));
-            Manager.Add_Actor (State.Actors.Last_Element);
+            declare
+               Rank : constant Deployment_Rank :=
+                        Deployment_Rank (Ship.Ship_Design.Default_Rank);
+            begin
+               Ranks (Rank).Append (Ship);
+            end;
          end loop;
+
+         declare
+            R : Non_Negative_Real := Radius;
+         begin
+            for Rank of Ranks loop
+               if not Rank.Is_Empty then
+                  Deploy_Rank (Rank, R);
+               end if;
+            end loop;
+         end;
+
       end Deploy;
 
       Encounter_Radius : Non_Negative_Real := 0.0;
