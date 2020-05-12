@@ -150,6 +150,9 @@ package body Athena.Empires.Create is
          Athena.Handles.System_Designs.Create
            (Empire     => Empire,
             Scout      => Scout_Design,
+            Recon      =>
+              Athena.Configure.Designs.Load_Design
+                (Empire, "recon"),
             Transport  => Transport_Design,
             Defender   => Defender_Design,
             Destroyer  => Destroyer_Design,

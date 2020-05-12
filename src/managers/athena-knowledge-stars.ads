@@ -4,6 +4,7 @@ private with WL.String_Maps;
 with Athena.Handles.Colony;
 with Athena.Handles.Empire;
 with Athena.Handles.Star;
+with Athena.Handles.Turn;
 
 package Athena.Knowledge.Stars is
 
@@ -22,6 +23,16 @@ package Athena.Knowledge.Stars is
      (Knowledge : Star_Knowledge'Class;
       Star      : Athena.Handles.Star.Star_Class)
       return Boolean;
+
+   function Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Turn.Turn_Class;
+
+   function Turns_Since_Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Natural;
 
    procedure Iterate_Neighbours
      (Knowledge : Star_Knowledge'Class;

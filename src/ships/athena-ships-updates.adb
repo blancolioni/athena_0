@@ -652,4 +652,23 @@ package body Athena.Ships.Updates is
 
    end Update;
 
+   -----------
+   -- Visit --
+   -----------
+
+   procedure Visit
+     (Ship : Athena.Handles.Ship.Ship_Class)
+   is
+   begin
+      if Ship.Star.Has_Element
+        and then not Ship.Destination.Has_Element
+        and then (not Ship.Star.Owner.Has_Element
+                  or else Ship.Star.Owner.Identifier /= Ship.Empire.Identifier)
+      then
+         Athena.Knowledge.Stars.Visit
+           (Empire => Ship.Empire,
+            Star   => Ship.Star);
+      end if;
+   end Visit;
+
 end Athena.Ships.Updates;

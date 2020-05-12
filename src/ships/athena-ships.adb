@@ -11,7 +11,6 @@ with Athena.Empires;
 with Athena.Technology;
 
 with Athena.Encounters;
-with Athena.Knowledge.Stars;
 
 with Athena.Handles.Design_Component.Selections;
 with Athena.Handles.Fleet.Selections;
@@ -486,6 +485,18 @@ package body Athena.Ships is
         .Weapons.Is_Empty;
    end Is_Armed;
 
+   -------------
+   -- Is_Idle --
+   -------------
+
+   function Is_Idle
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean
+   is
+   begin
+      return not Ship.Destination.Has_Element;
+   end Is_Idle;
+
    ------------------------
    -- Iterate_Components --
    ------------------------
@@ -701,9 +712,7 @@ package body Athena.Ships is
      (Arriving_Ship : Athena.Handles.Ship.Ship_Class)
    is
    begin
-      Athena.Knowledge.Stars.Visit
-        (Empire => Arriving_Ship.Empire,
-         Star   => Arriving_Ship.Star);
+      null;
    end On_Arrival;
 
 --        use Athena.Handles.Star_Knowledge;

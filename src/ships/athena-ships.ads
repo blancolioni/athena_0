@@ -37,6 +37,10 @@ package Athena.Ships is
       Cargo   : Athena.Db.Cargo_Type)
       return Non_Negative_Real;
 
+   function Is_Idle
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean;
+
    function Get_Drive
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Athena.Handles.Ship_Component.Ship_Component_Class;

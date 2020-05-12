@@ -13,6 +13,7 @@ with Athena.Identifiers;
 with Athena.Handles.Colony;
 with Athena.Handles.Empire_Manager;
 with Athena.Handles.Fleet.Selections;
+with Athena.Handles.Ship;
 with Athena.Handles.Ship_Design;
 with Athena.Handles.Star;
 
@@ -123,7 +124,17 @@ package body Athena.Managers.Attack is
                         * 5.0;
       Knowledge   : Athena.Knowledge.Stars.Star_Knowledge;
 
+      Monitored_Count : Natural := 0;
+      Required_Ships  : Natural := 0;
+      Recon_Ships     : Athena.Ships.Ship_Lists.List;
+
       procedure Check_Threat
+        (Threat  : Athena.Handles.Empire.Empire_Class;
+         Star    : Athena.Handles.Star.Star_Class;
+         Nearest : Athena.Handles.Colony.Colony_Class;
+         Stop    : out Boolean);
+
+      procedure Monitor_Threat
         (Threat  : Athena.Handles.Empire.Empire_Class;
          Star    : Athena.Handles.Star.Star_Class;
          Nearest : Athena.Handles.Colony.Colony_Class;
@@ -139,12 +150,16 @@ package body Athena.Managers.Attack is
          Nearest : Athena.Handles.Colony.Colony_Class;
          Stop    : out Boolean)
       is
-         Fleet : constant Athena.Handles.Fleet.Fleet_Class :=
-                   Find_Available_Fleet
-                     (For_Empire,
-                      Athena.Empires.Get_Manager (For_Empire, Manager),
-                      Nearest.Star, Star);
-         Can_Launch : Boolean := True;
+         Fleet          : constant Athena.Handles.Fleet.Fleet_Class :=
+                            Find_Available_Fleet
+                              (For_Empire,
+                               Athena.Empires.Get_Manager
+                                 (For_Empire, Manager),
+                               Nearest.Star, Star);
+         Can_Launch     : Boolean := True;
+         Recon_Id       : constant String :=
+                            Athena.Empires.Recon_Design (For_Empire)
+                            .Identifier;
       begin
 
          if Fleet.Destination.Identifier = Star.Identifier then
@@ -170,20 +185,24 @@ package body Athena.Managers.Attack is
            Athena.Ships.Select_Managed_Ships
              (Athena.Empires.Get_Manager (For_Empire, Manager))
          loop
-            if not Ship.Fleet.Has_Element
-              and then not Ship.Destination.Has_Element
-              and then Ship.First_Order = 0
-            then
-               if Ship.Star.Identifier /= Nearest.Star.Identifier then
-                  Athena.Ships.Move_To (Ship, Nearest.Star);
-               elsif Fleet.Location.Identifier = Nearest.Star.Identifier then
-                  Ship.Update_Ship.Set_Fleet (Fleet.Reference_Fleet).Done;
+            if Ship.Ship_Design.Identifier /= Recon_Id then
+               if not Ship.Fleet.Has_Element
+                 and then not Ship.Destination.Has_Element
+                 and then Ship.First_Order = 0
+               then
+                  if Ship.Star.Identifier /= Nearest.Star.Identifier then
+                     Athena.Ships.Move_To (Ship, Nearest.Star);
+                  elsif Fleet.Location.Identifier
+                    = Nearest.Star.Identifier
+                  then
+                     Ship.Update_Ship.Set_Fleet (Fleet.Reference_Fleet).Done;
+                  end if;
+               elsif Ship.Destination.Has_Element
+                 and then Ship.Destination.Identifier = Nearest.Star.Identifier
+               then
+                  null;
+                  --  Can_Launch := False;
                end if;
-            elsif Ship.Destination.Has_Element
-              and then Ship.Destination.Identifier = Nearest.Star.Identifier
-            then
-               null;
-               --  Can_Launch := False;
             end if;
          end loop;
 
@@ -198,10 +217,86 @@ package body Athena.Managers.Attack is
 
       end Check_Threat;
 
+      --------------------
+      -- Monitor_Threat --
+      --------------------
+
+      procedure Monitor_Threat
+        (Threat  : Athena.Handles.Empire.Empire_Class;
+         Star    : Athena.Handles.Star.Star_Class;
+         Nearest : Athena.Handles.Colony.Colony_Class;
+         Stop    : out Boolean)
+      is
+         pragma Unreferenced (Nearest);
+         Min_Distance : Non_Negative_Real := Non_Negative_Real'Last;
+         Assigned     : Athena.Handles.Ship.Ship_Handle :=
+                          Athena.Handles.Ship.Empty_Handle;
+      begin
+         Stop := False;
+
+         Monitored_Count := Monitored_Count + 1;
+         if Knowledge.Turns_Since_Last_Visit (Star) <= Monitored_Count then
+            return;
+         end if;
+
+         for Ship of Recon_Ships loop
+            if Athena.Ships.Is_Idle (Ship) then
+               declare
+                  D : constant Non_Negative_Real :=
+                        Athena.Stars.Distance (Ship.Star, Star);
+               begin
+                  if D < Min_Distance then
+                     Min_Distance := D;
+                     Assigned := Athena.Handles.Ship.Get (Ship.Reference_Ship);
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         if Assigned.Has_Element then
+            Log ("attack", For_Empire,
+                 "ordering " & Assigned.Name
+                 & " to observe "
+                 & Threat.Name & " colony on " & Star.Name);
+
+            Athena.Orders.Set_Destination (Assigned, Star, Manager.Priority);
+         else
+            Required_Ships := Required_Ships + 1;
+         end if;
+
+      end Monitor_Threat;
+
    begin
       Knowledge.Load (For_Empire);
+
+      for Recon_Ship of
+        Athena.Ships.Select_Managed_Ships
+          (Athena.Empires.Attack_Manager (For_Empire))
+      loop
+         if Recon_Ship.Ship_Design.Identifier
+           = Athena.Empires.Recon_Design (For_Empire).Identifier
+         then
+            Recon_Ships.Append
+              (Athena.Handles.Ship.Get (Recon_Ship.Reference_Ship));
+         end if;
+      end loop;
+
+      Knowledge.Iterate_Threats
+        (Max_Range, Monitor_Threat'Access);
       Knowledge.Iterate_Threats
         (Max_Range, Check_Threat'Access);
+
+      if Required_Ships > 0 then
+         Athena.Orders.Build_Ships
+           (Empire   => For_Empire,
+            Design   => Athena.Empires.Recon_Design (For_Empire),
+            Fleet    => Athena.Handles.Fleet.Empty_Handle,
+            Manager  => Manager,
+            Send_To  => Athena.Handles.Star.Empty_Handle,
+            Count    => Required_Ships,
+            Priority => Manager.Priority);
+      end if;
+
    end Evaluate_Threats;
 
    --------------------------

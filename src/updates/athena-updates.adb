@@ -465,6 +465,8 @@ package body Athena.Updates is
 
       For_All_Colonies (After_Production'Access);
 
+      Athena.Ships.For_All_Ships (Athena.Ships.Updates.Visit'Access);
+
       Run_Encounters;
 
       For_All_Colonies (Check_Colony_Owner'Access);

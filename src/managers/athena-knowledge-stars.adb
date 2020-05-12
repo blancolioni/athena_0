@@ -7,7 +7,6 @@ with Athena.Stars;
 
 with Athena.Handles.Ship;
 with Athena.Handles.Star_Knowledge;
-with Athena.Handles.Turn;
 
 with Athena.Db.Ship_Knowledge;
 with Athena.Db.Star_Knowledge;
@@ -174,6 +173,26 @@ package body Athena.Knowledge.Stars is
       end loop;
    end Iterate_Uncolonized;
 
+   ----------------
+   -- Last_Visit --
+   ----------------
+
+   function Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Turn.Turn_Class
+   is
+      Rec : constant Athena.Db.Star_Knowledge.Star_Knowledge_Type :=
+              Athena.Db.Star_Knowledge.Get_By_Star_Knowledge
+                (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+   begin
+      if Rec.Has_Element then
+         return Athena.Handles.Turn.Get (Rec.Last_Visit);
+      else
+         return Athena.Handles.Turn.Empty_Handle;
+      end if;
+   end Last_Visit;
+
    ----------
    -- Load --
    ----------
@@ -316,6 +335,26 @@ package body Athena.Knowledge.Stars is
 
    end Set_Colonizing;
 
+   ----------------------------
+   -- Turns_Since_Last_Visit --
+   ----------------------------
+
+   function Turns_Since_Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Natural
+   is
+      Last_Visit_Turn : constant Athena.Handles.Turn.Turn_Class :=
+                          Knowledge.Last_Visit (Star);
+   begin
+      if Last_Visit_Turn.Has_Element then
+         return Athena.Turns.Current_Turn.Turn_Number
+           - Last_Visit_Turn.Turn_Number;
+      else
+         return Natural'Last;
+      end if;
+   end Turns_Since_Last_Visit;
+
    -----------------------
    -- Update_Neighbours --
    -----------------------
@@ -418,6 +457,12 @@ package body Athena.Knowledge.Stars is
       begin
 
          if Ship.Empire.Identifier = Empire.Identifier then
+            return;
+         end if;
+
+         if Ship.Destination.Has_Element
+           and then Ship.Progress > 0.0
+         then
             return;
          end if;
 

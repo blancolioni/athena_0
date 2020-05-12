@@ -290,6 +290,19 @@ package body Athena.Empires is
    end Pay;
 
    ------------------
+   -- Recon_Design --
+   ------------------
+
+   function Recon_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class
+   is
+      use Athena.Handles.System_Designs.Selections;
+   begin
+      return First_Where (Empire = For_Empire).Recon;
+   end Recon_Design;
+
+   ------------------
    -- Scout_Design --
    ------------------
 

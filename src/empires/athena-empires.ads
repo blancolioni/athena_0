@@ -59,6 +59,10 @@ package Athena.Empires is
      (For_Empire : Athena.Handles.Empire.Empire_Class)
       return Athena.Handles.Ship_Design.Ship_Design_Class;
 
+   function Recon_Design
+     (For_Empire : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.Ship_Design.Ship_Design_Class;
+
    function Defender_Design
      (For_Empire : Athena.Handles.Empire.Empire_Class)
       return Athena.Handles.Ship_Design.Ship_Design_Class;
