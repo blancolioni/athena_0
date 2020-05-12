@@ -16,6 +16,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Non_Negative_Real;
 
+   function Weapon_Mass
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real;
+
    function Speed
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
      return Non_Negative_Real;

@@ -86,8 +86,8 @@ private
          Empire         : Athena.Handles.Empire.Empire_Handle;
          Neighbour_Map  : Neighbour_Maps.Map;
          Neighbour_List : Neighbour_Lists.List;
-         Threat_Map  : Neighbour_Maps.Map;
-         Threat_List : Neighbour_Lists.List;
+         Threat_Map     : Neighbour_Maps.Map;
+         Threat_List    : Neighbour_Lists.List;
          Uncolonized    : Star_Maps.Map;
          Visited        : Star_Maps.Map;
          Colonizing     : Star_Maps.Map;

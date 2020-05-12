@@ -821,6 +821,35 @@ package body Athena.Ships is
 
    end Upgrade_Component;
 
+   -----------------
+   -- Weapon_Mass --
+   -----------------
+
+   function Weapon_Mass
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real
+   is
+      Mass : Non_Negative_Real := 0.0;
+
+      procedure Update_Mass
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class);
+
+      -----------------
+      -- Update_Mass --
+      -----------------
+
+      procedure Update_Mass
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class)
+      is
+      begin
+         Mass := Mass + Weapon.Design_Component.Mass;
+      end Update_Mass;
+
+   begin
+      Iterate_Weapons (Of_Ship, Update_Mass'Access);
+      return Mass;
+   end Weapon_Mass;
+
    ------------------
    -- Weapon_Range --
    ------------------

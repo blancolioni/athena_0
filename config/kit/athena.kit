@@ -130,6 +130,7 @@ record Ship_Knowledge is
     Weapon_Mass : Long_Float;
     Drive_Mass  : Long_Float;
     key Ship_Knowledge with Star_Knowledge, Turn;
+    unique key Observed_Ship with Star_Knowledge, Identifier;
 end Ship_Knowledge;
 
 record Fleet : Has_Identifier, Has_Name is

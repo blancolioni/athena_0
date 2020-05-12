@@ -2,11 +2,14 @@ with Athena.Logging;
 with Athena.Turns;
 
 with Athena.Colonies;
+with Athena.Ships;
 with Athena.Stars;
 
+with Athena.Handles.Ship;
 with Athena.Handles.Star_Knowledge;
 with Athena.Handles.Turn;
 
+with Athena.Db.Ship_Knowledge;
 with Athena.Db.Star_Knowledge;
 
 package body Athena.Knowledge.Stars is
@@ -386,40 +389,86 @@ package body Athena.Knowledge.Stars is
      (Empire : Athena.Handles.Empire.Empire_Class;
       Star   : Athena.Handles.Star.Star_Class)
    is
-      Knowledge : Star_Knowledge;
-   begin
-      Knowledge.Load (Empire);
+      K      : constant Athena.Db.Star_Knowledge_Reference :=
+                 Get_Knowledge_Reference (Empire, Star);
+      Colony : constant Athena.Handles.Colony.Colony_Class :=
+                 Athena.Colonies.Get_Colony (Star);
+      Owner  : constant Athena.Db.Empire_Reference :=
+                 (if Star.Owner.Has_Element
+                  then Star.Owner.Reference_Empire
+                  else Athena.Db.Null_Empire_Reference);
+      Pop    : constant Non_Negative_Real :=
+                 (if Colony.Has_Element then Colony.Pop else 0.0);
+      Ind    : constant Non_Negative_Real :=
+                 (if Colony.Has_Element then Colony.Industry else 0.0);
 
-      if not Knowledge.Visited.Contains (Star.Identifier) then
-         declare
-            K : constant Athena.Db.Star_Knowledge_Reference :=
-                  Get_Knowledge_Reference (Knowledge.Empire, Star);
-            Colony : constant Athena.Handles.Colony.Colony_Class :=
-                       Athena.Colonies.Get_Colony (Star);
-            Owner  : constant Athena.Db.Empire_Reference :=
-                       (if Star.Owner.Has_Element
-                        then Star.Owner.Reference_Empire
-                        else Athena.Db.Null_Empire_Reference);
-            Pop : constant Non_Negative_Real :=
-                    (if Colony.Has_Element then Colony.Pop else 0.0);
-            Ind : constant Non_Negative_Real :=
-                    (if Colony.Has_Element then Colony.Industry else 0.0);
-         begin
-            Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
-              .Set_Visited (True)
-              .Set_Last_Visit (Athena.Turns.Current_Turn.Reference_Turn)
-              .Set_Owner (Owner)
-              .Set_Last_Pop (Pop)
-              .Set_Last_Ind (Ind)
+      procedure Record_Ship
+        (Ship : Athena.Handles.Ship.Ship_Class);
+
+      -----------------
+      -- Record_Ship --
+      -----------------
+
+      procedure Record_Ship
+        (Ship : Athena.Handles.Ship.Ship_Class)
+      is
+         Current : constant Db.Ship_Knowledge.Ship_Knowledge_Type :=
+                     Athena.Db.Ship_Knowledge.Get_By_Observed_Ship
+                       (K, Ship.Identifier);
+      begin
+
+         if Ship.Empire.Identifier = Empire.Identifier then
+            return;
+         end if;
+
+         if Current.Has_Element then
+            Athena.Db.Ship_Knowledge.Update_Ship_Knowledge
+              (Current.Get_Ship_Knowledge_Reference)
+              .Set_Star_Knowledge (K)
+              .Set_Turn (Athena.Turns.Current_Turn.Reference_Turn)
               .Done;
+         else
+            Athena.Db.Ship_Knowledge.Create
+              (Star_Knowledge => K,
+               Owner          => Ship.Empire.Reference_Empire,
+               Turn           =>
+                 Athena.Turns.Current_Turn.Reference_Turn,
+               Identifier     => Ship.Identifier,
+               Name           => Ship.Name,
+               Mass           => Athena.Ships.Mass (Ship),
+               Weapon_Mass    => Athena.Ships.Weapon_Mass (Ship),
+               Drive_Mass     =>
+                 Athena.Ships.Get_Drive (Ship).Design_Component.Mass);
+         end if;
+      end Record_Ship;
 
+   begin
+      Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+        .Set_Visited (True)
+        .Set_Last_Visit (Athena.Turns.Current_Turn.Reference_Turn)
+        .Set_Owner (Owner)
+        .Set_Last_Pop (Pop)
+        .Set_Last_Ind (Ind)
+        .Done;
+
+      Athena.Ships.For_All_Ships
+        (At_Star => Star,
+         Process => Record_Ship'Access);
+
+      declare
+         Knowledge : Star_Knowledge;
+
+      begin
+         Knowledge.Load (Empire);
+
+         if not Knowledge.Visited.Contains (Star.Identifier) then
             Knowledge.Visited.Insert (Star.Identifier, Star);
 
             Cached_Knowledge_Map.Replace
               (Knowledge.Empire.Identifier,
                (Athena.Turns.Current_Turn, Knowledge));
-         end;
-      end if;
+         end if;
+      end;
 
    end Visit;
 
