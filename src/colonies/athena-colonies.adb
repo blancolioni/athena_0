@@ -121,6 +121,9 @@ package body Athena.Colonies is
       Colony.Update_Colony
         .Set_Empire (Captured_By.Reference_Empire)
         .Done;
+      Colony.Star.Update_Star
+        .Set_Owner (Captured_By.Reference_Empire)
+        .Done;
       Athena.Knowledge.Stars.Clear_Cache;
 
    end Capture_Colony;
