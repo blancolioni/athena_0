@@ -4,6 +4,7 @@ with Athena.Turns;
 with Athena.Colonies;
 with Athena.Ships;
 with Athena.Stars;
+with Athena.Treaties;
 
 with Athena.Handles.Ship;
 with Athena.Handles.Star_Knowledge;
@@ -98,6 +99,33 @@ package body Athena.Knowledge.Stars is
          return K;
       end if;
    end Get_Knowledge_Reference;
+
+   ---------------------
+   -- Get_Known_Ships --
+   ---------------------
+
+   function Get_Known_Ships
+     (Knowledge : Star_Knowledge'Class;
+      At_Star   : Athena.Handles.Star.Star_Class)
+      return Known_Ship_Lists.List
+   is
+      K_Rec : constant Athena.Db.Star_Knowledge.Star_Knowledge_Type :=
+                Athena.Db.Star_Knowledge.Get_By_Star_Knowledge
+                  (At_Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+   begin
+      return List : Known_Ship_Lists.List do
+         for Known_Ship of
+           Athena.Db.Ship_Knowledge.Select_By_Ship_Knowledge
+             (K_Rec.Get_Star_Knowledge_Reference,
+              K_Rec.Last_Visit)
+         loop
+            List.Append
+              (Known_Ship_Record'
+                 (Mass        => Known_Ship.Mass,
+                  Weapon_Mass => Known_Ship.Weapon_Mass));
+         end loop;
+      end return;
+   end Get_Known_Ships;
 
    ------------------------
    -- Iterate_Neighbours --
@@ -202,6 +230,36 @@ package body Athena.Knowledge.Stars is
       For_Empire : Athena.Handles.Empire.Empire_Class)
    is
       Turn : constant Positive := Athena.Turns.Current_Turn;
+
+      function Greater_Threat (Left, Right : Neighbour_Record) return Boolean;
+
+      --------------------
+      -- Greater_Threat --
+      --------------------
+
+      function Greater_Threat
+        (Left, Right : Neighbour_Record)
+         return Boolean
+      is
+         Left_War : constant Boolean :=
+                      Left.Neighbour.Owner.Has_Element
+                          and then Athena.Treaties.At_War
+                            (For_Empire, Left.Neighbour.Owner);
+         Right_War : constant Boolean :=
+                       Right.Neighbour.Owner.Has_Element
+                           and then Athena.Treaties.At_War
+                             (For_Empire, Right.Neighbour.Owner);
+      begin
+         if Left_War = Right_War then
+            return Closer (Left, Right);
+         else
+            return Left_War;
+         end if;
+      end Greater_Threat;
+
+      package Threat_Sorting is
+        new Neighbour_Lists.Generic_Sorting (Greater_Threat);
+
    begin
 
       declare
@@ -247,14 +305,11 @@ package body Athena.Knowledge.Stars is
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: sorting neighbours");
 
-      declare
-      begin
-         for Neighbour of Knowledge.Neighbour_Map loop
-            Knowledge.Neighbour_List.Append (Neighbour);
-         end loop;
+      for Neighbour of Knowledge.Neighbour_Map loop
+         Knowledge.Neighbour_List.Append (Neighbour);
+      end loop;
 
-         Neighbour_Sorting.Sort (Knowledge.Neighbour_List);
-      end;
+      Neighbour_Sorting.Sort (Knowledge.Neighbour_List);
 
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: finding threats");
@@ -272,6 +327,8 @@ package body Athena.Knowledge.Stars is
             end;
          end if;
       end loop;
+
+      Threat_Sorting.Sort (Knowledge.Threat_List);
 
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: scanning star knowledge");
