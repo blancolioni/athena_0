@@ -384,24 +384,28 @@ package body Athena.Updates is
                   Hostile => False));
          end if;
 
-         if Athena.Ships.Is_Armed (Ship)
-           and then not Star_Map (Key).Hostile
-         then
-            for Other_Ship of Star_Map (Key).Ships loop
-               if Athena.Ships.Is_Armed (Other_Ship)
-                 and then Other_Ship.Empire.Identifier
-                   /= Ship.Empire.Identifier
-               then
-                  Athena.Logging.Log
-                    ("encounter: checking treaty between "
-                     & Other_Ship.Empire.Name
-                     & " and " & Ship.Empire.Name);
-               end if;
+         if not Star_Map (Key).Hostile then
+            declare
+               Armed : constant Boolean := Athena.Ships.Is_Armed (Ship);
+            begin
+               for Other_Ship of Star_Map (Key).Ships loop
+                  if (Armed or else Athena.Ships.Is_Armed (Other_Ship))
+                    and then Other_Ship.Empire.Identifier
+                      /= Ship.Empire.Identifier
+                  then
+                     Athena.Logging.Log
+                       ("encounter: checking treaty between "
+                        & Other_Ship.Empire.Name
+                        & " and " & Ship.Empire.Name);
+                  end if;
 
-               if Athena.Treaties.At_War (Other_Ship.Empire, Ship.Empire) then
-                  Star_Map (Key).Hostile := True;
-               end if;
-            end loop;
+                  if Athena.Treaties.At_War
+                    (Other_Ship.Empire, Ship.Empire)
+                  then
+                     Star_Map (Key).Hostile := True;
+                  end if;
+               end loop;
+            end;
          end if;
 
          Star_Map (Key).Ships.Append
