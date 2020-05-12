@@ -1,6 +1,8 @@
 with Athena.Encounters.Actors;
 with Athena.Encounters.Situation;
 
+with Athena.Stars;
+
 package body Athena.Ships.Escape is
 
    type Escape_Script_Type is
@@ -42,6 +44,8 @@ package body Athena.Ships.Escape is
       procedure Add_Hostile
         (Hostile : Athena.Encounters.Situation.Situation_Actor);
 
+      function Find_Friendly return Athena.Handles.Star.Star_Class;
+
       -----------------
       -- Add_Hostile --
       -----------------
@@ -54,6 +58,39 @@ package body Athena.Ships.Escape is
          Sum_X := Sum_X + Hostile.DX;
          Sum_Y := Sum_Y + Hostile.DY;
       end Add_Hostile;
+
+      -------------------
+      -- Find_Friendly --
+      -------------------
+
+      function Find_Friendly return Athena.Handles.Star.Star_Class is
+         Closest : Athena.Handles.Star.Star_Handle :=
+                     Athena.Handles.Star.Empty_Handle;
+         Distance : Non_Negative_Real := Non_Negative_Real'Last;
+
+         procedure Check (Star : Athena.Handles.Star.Star_Class;
+                          D    : Non_Negative_Real);
+
+         -----------
+         -- Check --
+         -----------
+
+         procedure Check (Star : Athena.Handles.Star.Star_Class;
+                          D    : Non_Negative_Real)
+         is
+         begin
+            if D < Distance
+              and then Star.Owner.Identifier = Actor.Owner.Identifier
+            then
+               Distance := D;
+               Closest  := Athena.Handles.Star.Get (Star.Reference_Star);
+            end if;
+         end Check;
+
+      begin
+         Athena.Stars.Iterate_Nearest (Situation.Star, 99.0, Check'Access);
+         return Closest;
+      end Find_Friendly;
 
    begin
       Situation.Iterate_Hostiles (Add_Hostile'Access);
@@ -68,6 +105,18 @@ package body Athena.Ships.Escape is
          end;
       else
          Actor.Clear_Destination;
+      end if;
+
+      if not Actor.Is_Jumping then
+         declare
+            use Athena.Encounters;
+         begin
+            Actor.Start_Jump
+              (Jump_Tick   =>
+                 Situation.Current_Tick
+               + Encounter_Tick (Actor.Size * 10.0),
+               Destination => Find_Friendly);
+         end;
       end if;
 
    end Update;

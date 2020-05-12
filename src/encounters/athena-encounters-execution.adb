@@ -19,6 +19,7 @@ with Athena.Handles.Empire;
 with Athena.Handles.Participant;
 with Athena.Handles.Ship;
 with Athena.Handles.Ship_Component;
+with Athena.Handles.Star;
 
 package body Athena.Encounters.Execution is
 
@@ -83,10 +84,20 @@ package body Athena.Encounters.Execution is
          New_Scripts : Script_Vectors.Vector;
       end record;
 
+   overriding function Star
+     (Situation : Situation_Type)
+      return Athena.Handles.Star.Star_Class
+   is (Situation.State.Encounter.Star);
+
    overriding function Origin
      (Situation : Situation_Type)
       return Encounter_Point
    is (Situation.Actor.Location);
+
+   overriding function Current_Tick
+     (Situation : Situation_Type)
+      return Encounter_Tick
+   is (Situation.State.Tick);
 
    overriding function Heading
      (Situation : Situation_Type)
@@ -184,9 +195,10 @@ package body Athena.Encounters.Execution is
       Actor     : Encounter_Actor_Reference)
       return Athena.Encounters.Situation.Situation_Actor
    is
+      A : constant Athena.Encounters.Actors.Actor_Type :=
+            Situation.State.Actors.Element (Actor);
    begin
-      return Situation.State.Actors.Element (Actor)
-        .Current_Situation (Situation);
+      return A.Current_Situation (Situation);
    end Get;
 
    -------------------
@@ -495,6 +507,16 @@ package body Athena.Encounters.Execution is
       for Actor of State.Actors loop
          if Actor.Is_Active (State.Tick) then
             Actor.Update;
+
+            if Actor.Is_Jumping
+              and then Actor.Jump_Tick = State.Tick
+            then
+               Athena.Logging.Log
+                 (Actor.Image
+                  & " jumps to " & Actor.Jump_Destination.Name);
+               Actor.Execute_Jump;
+               Actor.Destroy_Actor (State.Tick);
+            end if;
          end if;
       end loop;
 

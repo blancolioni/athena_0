@@ -66,6 +66,9 @@ package body Athena.Encounters.Actors.Ships is
      (Ship : in out Ship_Actor_Type;
       Hit  : Hit_Record);
 
+   overriding procedure Execute_Jump
+     (Ship : in out Ship_Actor_Type);
+
    procedure Apply_Hull_Damage
      (Ship   : in out Ship_Actor_Type'Class;
       Damage : Non_Negative_Real);
@@ -373,7 +376,10 @@ package body Athena.Encounters.Actors.Ships is
          Hits                => <>,
          Max_Shield          => Shield,
          Current_Shield      => Shield,
-         Weapons             => Weapons);
+         Weapons             => Weapons,
+         Jumping             => False,
+         Jump_Tick           => Encounter_Tick'First,
+         Jump_Destination    => Athena.Handles.Star.Empty_Handle);
    end Create_Actor;
 
    --------------------
@@ -403,6 +409,17 @@ package body Athena.Encounters.Actors.Ships is
             then Ship.Current_Shield / Ship.Max_Shield
             else 0.0));
    end Current_Sprite;
+
+   ------------------
+   -- Execute_Jump --
+   ------------------
+
+   overriding procedure Execute_Jump
+     (Ship : in out Ship_Actor_Type)
+   is
+   begin
+      Athena.Ships.Move_To (Ship.Ship, Ship.Jump_Destination);
+   end Execute_Jump;
 
    -----------
    -- Image --

@@ -1,4 +1,5 @@
 with Athena.Handles.Ship_Component;
+with Athena.Handles.Star;
 
 package Athena.Encounters.Situation is
 
@@ -16,9 +17,19 @@ package Athena.Encounters.Situation is
 
    type Situation_Interface is interface;
 
+   function Star
+     (Situation : Situation_Interface)
+      return Athena.Handles.Star.Star_Class
+      is abstract;
+
    function Origin
      (Situation : Situation_Interface)
       return Encounter_Point
+      is abstract;
+
+   function Current_Tick
+     (Situation : Situation_Interface)
+      return Encounter_Tick
       is abstract;
 
    function Heading
