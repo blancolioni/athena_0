@@ -4,4 +4,4 @@
 @build\bin\athena-driver --add-empire --name=Harkonnen --color=#3cb44b --capital="Geidi Prime"
 @build\bin\athena-driver --add-empire --name=Corrino --color=#ffe119 --capital=Kaitan
 @build\bin\athena-driver --add-empire --name=Byzantium --plural=Byzantines --adjective=Byzantine --color=#4363d8 --capital=Constantinople
-@build\bin\athena-driver --update --update-count=75
+@build\bin\athena-driver --update
