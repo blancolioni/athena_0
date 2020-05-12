@@ -4,11 +4,12 @@ with Athena.Orders;
 with Athena.Ships;
 with Athena.Stars;
 with Athena.Technology;
-with Athena.Turns;
+with Athena.Treaties;
 
 with Athena.Knowledge.Stars;
 
 with Athena.Identifiers;
+with Athena.Logging;
 
 with Athena.Handles.Colony;
 with Athena.Handles.Empire_Manager;
@@ -29,6 +30,12 @@ package body Athena.Managers.Attack is
       Origin      : Athena.Handles.Star.Star_Class;
       Destination : Athena.Handles.Star.Star_Class)
       return Athena.Handles.Fleet.Fleet_Class;
+
+   function Sufficient_Attack_Force
+     (Knowledge : Athena.Knowledge.Stars.Star_Knowledge'Class;
+      Fleet     : Athena.Handles.Fleet.Fleet_Class;
+      Target    : Athena.Handles.Star.Star_Class)
+      return Boolean;
 
    -------------------
    -- Create_Orders --
@@ -207,9 +214,11 @@ package body Athena.Managers.Attack is
          end loop;
 
          if Can_Launch
-           and then Athena.Ships.Fleet_Mass (Fleet)
-           > Real (Athena.Turns.Current_Turn * 10)
+           and then Sufficient_Attack_Force (Knowledge, Fleet, Star)
          then
+            if not Athena.Treaties.At_War (For_Empire, Star.Owner) then
+               Athena.Treaties.Declare_War (For_Empire, Star.Owner);
+            end if;
             Athena.Orders.Move_Fleet (Fleet, Star);
          end if;
 
@@ -370,5 +379,38 @@ package body Athena.Managers.Attack is
          Progress    => 0.0);
 
    end Find_Available_Fleet;
+
+   function Sufficient_Attack_Force
+     (Knowledge : Athena.Knowledge.Stars.Star_Knowledge'Class;
+      Fleet     : Athena.Handles.Fleet.Fleet_Class;
+      Target    : Athena.Handles.Star.Star_Class)
+      return Boolean
+   is
+      Fleet_Ships   : Athena.Ships.Ship_Lists.List;
+      Opposition    : constant Athena.Knowledge.Stars.Known_Ship_Lists.List :=
+                        Knowledge.Get_Known_Ships (Target);
+      Their_Weapons : Non_Negative_Real := 0.0;
+      Our_Weapons   : Non_Negative_Real := 0.0;
+   begin
+      for Ship of Opposition loop
+         Their_Weapons := Their_Weapons + Ship.Weapon_Mass;
+      end loop;
+      Athena.Ships.Get_Ships (Fleet, Fleet_Ships);
+      for Ship of Fleet_Ships loop
+         Our_Weapons := Our_Weapons + Athena.Ships.Weapon_Mass (Ship);
+      end loop;
+
+      Athena.Logging.Log
+        (Fleet.Empire.Name & ": checking forces for attack on "
+         & Target.Name & " owned by " & Target.Owner.Name
+         & ": we have" & Fleet_Ships.Length'Image
+         & " ships with weapon mass "
+         & Image (Our_Weapons)
+         & "; they have " & Opposition.Length'Image
+         & " ships with weapon mass "
+         & Image (Their_Weapons));
+      return Our_Weapons > Their_Weapons * 1.5;
+
+   end Sufficient_Attack_Force;
 
 end Athena.Managers.Attack;
