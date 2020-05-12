@@ -140,6 +140,7 @@ package body Athena.UI.Models.Galaxy is
             end;
 
             Model.Restore_State;
+
          end if;
       end loop;
 
@@ -163,6 +164,20 @@ package body Athena.UI.Models.Galaxy is
          Model.Render;
          Model.Restore_State;
 
+         if Rec.Handle.Owner.Has_Element then
+            declare
+               --  use type Nazar.Nazar_Float;
+            begin
+               Model.Save_State;
+               Model.Set_Color (1.0, 1.0, 1.0, 1.0);
+               Model.Set_Font ("Courier", 12.0, False, False);
+               Model.Move_To (Rec.X, Rec.Y);
+               Model.Draw_Text (Rec.Handle.Name);
+               Model.Render;
+               Model.Restore_State;
+            end;
+         end if;
+
          if not Rec.Ships.Is_Empty then
             declare
                use type Nazar.Nazar_Float;
@@ -180,6 +195,7 @@ package body Athena.UI.Models.Galaxy is
                      Model.Set_Color (To_Nazar_Color (Empire_Ship.Empire.Rgb));
                   end if;
 
+                  Model.Move_To (Rec.X, Rec.Y);
                   Model.Circle (Radius);
                   Model.Render;
                   Radius := Radius + 2.0;
