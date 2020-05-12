@@ -1,5 +1,4 @@
 with Athena.Elementary_Functions;
---  with Athena.Logging;
 
 with Athena.Encounters.Actors.Ships;
 with Athena.Encounters.Actors.Weapons;
@@ -74,7 +73,8 @@ package body Athena.Encounters.Actors is
       return Athena.Encounters.Situation.Situation_Actor'
         (Index   => Actor.Index,
          Class   => Actor.Class,
-         Dead    => Actor.Dead,
+         Dead    =>
+           Actor.Dead or else not Actor.Is_Active (Situation.Current_Tick),
          Mass    => Actor.Mass,
          Size    => Actor.Size,
          DX      => Actor.Location.X - Situation.Origin.X,
@@ -150,6 +150,22 @@ package body Athena.Encounters.Actors is
       Actor.Destination := (Actor.Location.X + DX, Actor.Location.Y + DY);
       Actor.Have_Destination := True;
    end Set_Destination;
+
+   ----------------
+   -- Start_Jump --
+   ----------------
+
+   procedure Start_Jump
+     (Actor       : in out Root_Actor_Type;
+      Jump_Tick   : Encounter_Tick;
+      Destination : Athena.Handles.Star.Star_Class)
+   is
+   begin
+      Actor.Jumping := True;
+      Actor.Jump_Tick := Jump_Tick;
+      Actor.Jump_Destination :=
+        Athena.Handles.Star.Get (Destination.Reference_Star);
+   end Start_Jump;
 
    ------------
    -- Update --

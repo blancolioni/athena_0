@@ -8,6 +8,7 @@ with Athena.Encounters.Sprites;
 with Athena.Handles.Empire;
 with Athena.Handles.Ship;
 with Athena.Handles.Ship_Component;
+with Athena.Handles.Star;
 
 package Athena.Encounters.Actors is
 
@@ -98,6 +99,27 @@ package Athena.Encounters.Actors is
      (Actor     : in out Root_Actor_Type;
       Following : Athena.Encounters.Situation.Situation_Actor);
 
+   function Is_Jumping
+     (Actor : Root_Actor_Type)
+      return Boolean;
+
+   function Jump_Tick
+     (Actor : Root_Actor_Type)
+      return Encounter_Tick;
+
+   function Jump_Destination
+     (Actor : Root_Actor_Type)
+      return Athena.Handles.Star.Star_Class;
+
+   procedure Start_Jump
+     (Actor       : in out Root_Actor_Type;
+      Jump_Tick   : Encounter_Tick;
+      Destination : Athena.Handles.Star.Star_Class);
+
+   procedure Execute_Jump
+     (Actor : in out Root_Actor_Type)
+   is null;
+
    procedure Destroy_Actor
      (Actor : in out Root_Actor_Type;
       Tick  : Encounter_Tick);
@@ -151,7 +173,9 @@ private
          First_Tick          : Encounter_Tick;
          Last_Tick           : Encounter_Tick;
          Hits                : Hit_Lists.List;
-
+         Jumping             : Boolean := False;
+         Jump_Tick           : Encounter_Tick;
+         Jump_Destination    : Athena.Handles.Star.Star_Handle;
 --           case Class is
 --              when Ship_Actor =>
 --                 Target_Speed   : Non_Negative_Real;
@@ -215,5 +239,20 @@ private
      (Actor : Root_Actor_Type)
       return Non_Negative_Real
    is (Actor.Size);
+
+   function Is_Jumping
+     (Actor : Root_Actor_Type)
+      return Boolean
+   is (Actor.Jumping);
+
+   function Jump_Tick
+     (Actor : Root_Actor_Type)
+      return Encounter_Tick
+   is (Actor.Jump_Tick);
+
+   function Jump_Destination
+     (Actor : Root_Actor_Type)
+      return Athena.Handles.Star.Star_Class
+   is (Actor.Jump_Destination);
 
 end Athena.Encounters.Actors;

@@ -56,7 +56,10 @@ package body Athena.Encounters.Actors.Weapons is
          First_Tick          => Tick,
          Last_Tick           => Tick + 3,
          Hits                => <>,
-         Progress            => 0.0);
+         Progress            => 0.0,
+         Jumping             => False,
+         Jump_Tick           => Encounter_Tick'First,
+         Jump_Destination    => Athena.Handles.Star.Empty_Handle);
    end Create_Beam_Actor;
 
    --------------------

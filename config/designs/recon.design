@@ -1,0 +1,5 @@
+components = {
+    drive = 1
+}
+
+default-script = escape

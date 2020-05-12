@@ -16,6 +16,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
       return Non_Negative_Real;
 
+   function Weapon_Mass
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real;
+
    function Speed
      (Of_Ship : Athena.Handles.Ship.Ship_Class)
      return Non_Negative_Real;
@@ -32,6 +36,10 @@ package Athena.Ships is
      (Of_Ship : Athena.Handles.Ship.Ship_Class;
       Cargo   : Athena.Db.Cargo_Type)
       return Non_Negative_Real;
+
+   function Is_Idle
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean;
 
    function Get_Drive
      (Of_Ship : Athena.Handles.Ship.Ship_Class)

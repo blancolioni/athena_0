@@ -1,11 +1,22 @@
-private with Ada.Containers.Doubly_Linked_Lists;
 private with WL.String_Maps;
+
+with Ada.Containers.Doubly_Linked_Lists;
 
 with Athena.Handles.Colony;
 with Athena.Handles.Empire;
 with Athena.Handles.Star;
+with Athena.Handles.Turn;
 
 package Athena.Knowledge.Stars is
+
+   type Known_Ship_Record is
+      record
+         Mass : Non_Negative_Real;
+         Weapon_Mass : Non_Negative_Real;
+      end record;
+
+   package Known_Ship_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Known_Ship_Record);
 
    type Star_Knowledge is tagged private;
 
@@ -22,6 +33,21 @@ package Athena.Knowledge.Stars is
      (Knowledge : Star_Knowledge'Class;
       Star      : Athena.Handles.Star.Star_Class)
       return Boolean;
+
+   function Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Turn.Turn_Class;
+
+   function Turns_Since_Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Natural;
+
+   function Get_Known_Ships
+     (Knowledge : Star_Knowledge'Class;
+      At_Star   : Athena.Handles.Star.Star_Class)
+      return Known_Ship_Lists.List;
 
    procedure Iterate_Neighbours
      (Knowledge : Star_Knowledge'Class;
@@ -55,6 +81,10 @@ package Athena.Knowledge.Stars is
      (Empire     : Athena.Handles.Empire.Empire_Class;
       Star       : Athena.Handles.Star.Star_Class);
 
+   procedure Visit
+     (Empire : Athena.Handles.Empire.Empire_Class;
+      Star   : Athena.Handles.Star.Star_Class);
+
    procedure Clear_Cache;
 
 private
@@ -82,8 +112,8 @@ private
          Empire         : Athena.Handles.Empire.Empire_Handle;
          Neighbour_Map  : Neighbour_Maps.Map;
          Neighbour_List : Neighbour_Lists.List;
-         Threat_Map  : Neighbour_Maps.Map;
-         Threat_List : Neighbour_Lists.List;
+         Threat_Map     : Neighbour_Maps.Map;
+         Threat_List    : Neighbour_Lists.List;
          Uncolonized    : Star_Maps.Map;
          Visited        : Star_Maps.Map;
          Colonizing     : Star_Maps.Map;

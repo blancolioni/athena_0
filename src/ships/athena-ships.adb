@@ -16,7 +16,6 @@ with Athena.Handles.Design_Component.Selections;
 with Athena.Handles.Fleet.Selections;
 with Athena.Handles.Ship_Component.Selections;
 with Athena.Handles.Ship_Order;
-with Athena.Handles.Star_Knowledge.Selections;
 
 with Athena.Db.Fleet;
 with Athena.Db.Ship;
@@ -499,6 +498,18 @@ package body Athena.Ships is
         .Weapons.Is_Empty;
    end Is_Armed;
 
+   -------------
+   -- Is_Idle --
+   -------------
+
+   function Is_Idle
+     (Ship : Athena.Handles.Ship.Ship_Class)
+      return Boolean
+   is
+   begin
+      return not Ship.Destination.Has_Element;
+   end Is_Idle;
+
    ------------------------
    -- Iterate_Components --
    ------------------------
@@ -713,20 +724,24 @@ package body Athena.Ships is
    procedure On_Arrival
      (Arriving_Ship : Athena.Handles.Ship.Ship_Class)
    is
-      use Athena.Handles.Star_Knowledge;
-      use Athena.Handles.Star_Knowledge.Selections;
-      Knowledge : constant Star_Knowledge_Handle :=
-                    First_Where (Empire = Arriving_Ship.Empire
-                                  and Star = Arriving_Ship.Star);
    begin
-      if not Knowledge.Has_Element then
-         Create (Arriving_Ship.Star, Arriving_Ship.Empire, True, False);
-      elsif not Knowledge.Visited then
-         Knowledge.Update_Star_Knowledge
-           .Set_Visited (True)
-           .Done;
-      end if;
+      null;
    end On_Arrival;
+
+--        use Athena.Handles.Star_Knowledge;
+--        use Athena.Handles.Star_Knowledge.Selections;
+--        Knowledge : constant Star_Knowledge_Handle :=
+--                      First_Where (Empire = Arriving_Ship.Empire
+--                                    and Star = Arriving_Ship.Star);
+--     begin
+--        if not Knowledge.Has_Element then
+--           Create (Arriving_Ship.Star, Arriving_Ship.Empire, True, False);
+--        elsif not Knowledge.Visited then
+--           Knowledge.Update_Star_Knowledge
+--             .Set_Visited (True)
+--             .Done;
+--        end if;
+--     end On_Arrival;
 
    --------------------------
    -- Select_Managed_Ships --
@@ -827,6 +842,35 @@ package body Athena.Ships is
       end case;
 
    end Upgrade_Component;
+
+   -----------------
+   -- Weapon_Mass --
+   -----------------
+
+   function Weapon_Mass
+     (Of_Ship : Athena.Handles.Ship.Ship_Class)
+      return Non_Negative_Real
+   is
+      Mass : Non_Negative_Real := 0.0;
+
+      procedure Update_Mass
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class);
+
+      -----------------
+      -- Update_Mass --
+      -----------------
+
+      procedure Update_Mass
+        (Weapon : Athena.Handles.Ship_Component.Ship_Component_Class)
+      is
+      begin
+         Mass := Mass + Weapon.Design_Component.Mass;
+      end Update_Mass;
+
+   begin
+      Iterate_Weapons (Of_Ship, Update_Mass'Access);
+      return Mass;
+   end Weapon_Mass;
 
    ------------------
    -- Weapon_Range --

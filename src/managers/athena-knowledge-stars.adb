@@ -2,10 +2,14 @@ with Athena.Logging;
 with Athena.Turns;
 
 with Athena.Colonies;
+with Athena.Ships;
 with Athena.Stars;
+with Athena.Treaties;
 
+with Athena.Handles.Ship;
 with Athena.Handles.Star_Knowledge;
 
+with Athena.Db.Ship_Knowledge;
 with Athena.Db.Star_Knowledge;
 
 package body Athena.Knowledge.Stars is
@@ -30,6 +34,11 @@ package body Athena.Knowledge.Stars is
    procedure Update_Neighbours
      (Knowledge : in out Star_Knowledge'Class;
       Colony    : Athena.Handles.Colony.Colony_Class);
+
+   function Get_Knowledge_Reference
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      For_Star   : Athena.Handles.Star.Star_Class)
+      return Athena.Db.Star_Knowledge_Reference;
 
    -----------------
    -- Clear_Cache --
@@ -60,6 +69,63 @@ package body Athena.Knowledge.Stars is
       end if;
 
    end Clear_Colonizing;
+
+   -----------------------------
+   -- Get_Knowledge_Reference --
+   -----------------------------
+
+   function Get_Knowledge_Reference
+     (For_Empire : Athena.Handles.Empire.Empire_Class;
+      For_Star   : Athena.Handles.Star.Star_Class)
+      return Athena.Db.Star_Knowledge_Reference
+   is
+      use Athena.Db;
+      K : constant Star_Knowledge_Reference :=
+            Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
+              (For_Star.Reference_Star, For_Empire.Reference_Empire);
+   begin
+      if K = Null_Star_Knowledge_Reference then
+         return Athena.Handles.Star_Knowledge.Create
+           (Star       => For_Star,
+            Empire     => For_Empire,
+            Owner      => Athena.Handles.Empire.Empty_Handle,
+            Last_Visit => Athena.Handles.Turn.Empty_Handle,
+            Last_Pop   => 0.0,
+            Last_Ind   => 0.0,
+            Visited    => False,
+            Colonizing => False)
+           .Reference_Star_Knowledge;
+      else
+         return K;
+      end if;
+   end Get_Knowledge_Reference;
+
+   ---------------------
+   -- Get_Known_Ships --
+   ---------------------
+
+   function Get_Known_Ships
+     (Knowledge : Star_Knowledge'Class;
+      At_Star   : Athena.Handles.Star.Star_Class)
+      return Known_Ship_Lists.List
+   is
+      K_Rec : constant Athena.Db.Star_Knowledge.Star_Knowledge_Type :=
+                Athena.Db.Star_Knowledge.Get_By_Star_Knowledge
+                  (At_Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+   begin
+      return List : Known_Ship_Lists.List do
+         for Known_Ship of
+           Athena.Db.Ship_Knowledge.Select_By_Ship_Knowledge
+             (K_Rec.Get_Star_Knowledge_Reference,
+              K_Rec.Last_Visit)
+         loop
+            List.Append
+              (Known_Ship_Record'
+                 (Mass        => Known_Ship.Mass,
+                  Weapon_Mass => Known_Ship.Weapon_Mass));
+         end loop;
+      end return;
+   end Get_Known_Ships;
 
    ------------------------
    -- Iterate_Neighbours --
@@ -135,6 +201,26 @@ package body Athena.Knowledge.Stars is
       end loop;
    end Iterate_Uncolonized;
 
+   ----------------
+   -- Last_Visit --
+   ----------------
+
+   function Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Athena.Handles.Turn.Turn_Class
+   is
+      Rec : constant Athena.Db.Star_Knowledge.Star_Knowledge_Type :=
+              Athena.Db.Star_Knowledge.Get_By_Star_Knowledge
+                (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+   begin
+      if Rec.Has_Element then
+         return Athena.Handles.Turn.Get (Rec.Last_Visit);
+      else
+         return Athena.Handles.Turn.Empty_Handle;
+      end if;
+   end Last_Visit;
+
    ----------
    -- Load --
    ----------
@@ -144,6 +230,36 @@ package body Athena.Knowledge.Stars is
       For_Empire : Athena.Handles.Empire.Empire_Class)
    is
       Turn : constant Positive := Athena.Turns.Current_Turn;
+
+      function Greater_Threat (Left, Right : Neighbour_Record) return Boolean;
+
+      --------------------
+      -- Greater_Threat --
+      --------------------
+
+      function Greater_Threat
+        (Left, Right : Neighbour_Record)
+         return Boolean
+      is
+         Left_War : constant Boolean :=
+                      Left.Neighbour.Owner.Has_Element
+                          and then Athena.Treaties.At_War
+                            (For_Empire, Left.Neighbour.Owner);
+         Right_War : constant Boolean :=
+                       Right.Neighbour.Owner.Has_Element
+                           and then Athena.Treaties.At_War
+                             (For_Empire, Right.Neighbour.Owner);
+      begin
+         if Left_War = Right_War then
+            return Closer (Left, Right);
+         else
+            return Left_War;
+         end if;
+      end Greater_Threat;
+
+      package Threat_Sorting is
+        new Neighbour_Lists.Generic_Sorting (Greater_Threat);
+
    begin
 
       declare
@@ -189,14 +305,11 @@ package body Athena.Knowledge.Stars is
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: sorting neighbours");
 
-      declare
-      begin
-         for Neighbour of Knowledge.Neighbour_Map loop
-            Knowledge.Neighbour_List.Append (Neighbour);
-         end loop;
+      for Neighbour of Knowledge.Neighbour_Map loop
+         Knowledge.Neighbour_List.Append (Neighbour);
+      end loop;
 
-         Neighbour_Sorting.Sort (Knowledge.Neighbour_List);
-      end;
+      Neighbour_Sorting.Sort (Knowledge.Neighbour_List);
 
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: finding threats");
@@ -214,6 +327,8 @@ package body Athena.Knowledge.Stars is
             end;
          end if;
       end loop;
+
+      Threat_Sorting.Sort (Knowledge.Threat_List);
 
       Athena.Logging.Log
         (For_Empire.Name & "/knowledge: scanning star knowledge");
@@ -257,22 +372,13 @@ package body Athena.Knowledge.Stars is
       Star       : Athena.Handles.Star.Star_Class;
       Colonizing : Boolean)
    is
-      use type Athena.Db.Star_Knowledge_Reference;
       K : constant Athena.Db.Star_Knowledge_Reference :=
-            Athena.Db.Star_Knowledge.Get_Reference_By_Star_Knowledge
-              (Star.Reference_Star, Knowledge.Empire.Reference_Empire);
+            Get_Knowledge_Reference
+              (Knowledge.Empire, Star);
    begin
-      if K = Athena.Db.Null_Star_Knowledge_Reference then
-         Athena.Handles.Star_Knowledge.Create
-           (Star       => Star,
-            Empire     => Knowledge.Empire,
-            Visited    => False,
-            Colonizing => Colonizing);
-      else
-         Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
-           .Set_Colonizing (Colonizing)
-           .Done;
-      end if;
+      Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+        .Set_Colonizing (Colonizing)
+        .Done;
 
       if Colonizing then
          Knowledge.Colonizing.Insert (Star.Identifier, Star);
@@ -285,6 +391,26 @@ package body Athena.Knowledge.Stars is
          (Athena.Turns.Current_Turn, Star_Knowledge (Knowledge)));
 
    end Set_Colonizing;
+
+   ----------------------------
+   -- Turns_Since_Last_Visit --
+   ----------------------------
+
+   function Turns_Since_Last_Visit
+     (Knowledge : Star_Knowledge'Class;
+      Star      : Athena.Handles.Star.Star_Class)
+      return Natural
+   is
+      Last_Visit_Turn : constant Athena.Handles.Turn.Turn_Class :=
+                          Knowledge.Last_Visit (Star);
+   begin
+      if Last_Visit_Turn.Has_Element then
+         return Athena.Turns.Current_Turn.Turn_Number
+           - Last_Visit_Turn.Turn_Number;
+      else
+         return Natural'Last;
+      end if;
+   end Turns_Since_Last_Visit;
 
    -----------------------
    -- Update_Neighbours --
@@ -350,5 +476,102 @@ package body Athena.Knowledge.Stars is
          Process   => Update'Access);
 
    end Update_Neighbours;
+
+   -----------
+   -- Visit --
+   -----------
+
+   procedure Visit
+     (Empire : Athena.Handles.Empire.Empire_Class;
+      Star   : Athena.Handles.Star.Star_Class)
+   is
+      K      : constant Athena.Db.Star_Knowledge_Reference :=
+                 Get_Knowledge_Reference (Empire, Star);
+      Colony : constant Athena.Handles.Colony.Colony_Class :=
+                 Athena.Colonies.Get_Colony (Star);
+      Owner  : constant Athena.Db.Empire_Reference :=
+                 (if Star.Owner.Has_Element
+                  then Star.Owner.Reference_Empire
+                  else Athena.Db.Null_Empire_Reference);
+      Pop    : constant Non_Negative_Real :=
+                 (if Colony.Has_Element then Colony.Pop else 0.0);
+      Ind    : constant Non_Negative_Real :=
+                 (if Colony.Has_Element then Colony.Industry else 0.0);
+
+      procedure Record_Ship
+        (Ship : Athena.Handles.Ship.Ship_Class);
+
+      -----------------
+      -- Record_Ship --
+      -----------------
+
+      procedure Record_Ship
+        (Ship : Athena.Handles.Ship.Ship_Class)
+      is
+         Current : constant Db.Ship_Knowledge.Ship_Knowledge_Type :=
+                     Athena.Db.Ship_Knowledge.Get_By_Observed_Ship
+                       (K, Ship.Identifier);
+      begin
+
+         if Ship.Empire.Identifier = Empire.Identifier then
+            return;
+         end if;
+
+         if Ship.Destination.Has_Element
+           and then Ship.Progress > 0.0
+         then
+            return;
+         end if;
+
+         if Current.Has_Element then
+            Athena.Db.Ship_Knowledge.Update_Ship_Knowledge
+              (Current.Get_Ship_Knowledge_Reference)
+              .Set_Star_Knowledge (K)
+              .Set_Turn (Athena.Turns.Current_Turn.Reference_Turn)
+              .Done;
+         else
+            Athena.Db.Ship_Knowledge.Create
+              (Star_Knowledge => K,
+               Owner          => Ship.Empire.Reference_Empire,
+               Turn           =>
+                 Athena.Turns.Current_Turn.Reference_Turn,
+               Identifier     => Ship.Identifier,
+               Name           => Ship.Name,
+               Mass           => Athena.Ships.Mass (Ship),
+               Weapon_Mass    => Athena.Ships.Weapon_Mass (Ship),
+               Drive_Mass     =>
+                 Athena.Ships.Get_Drive (Ship).Design_Component.Mass);
+         end if;
+      end Record_Ship;
+
+   begin
+      Athena.Db.Star_Knowledge.Update_Star_Knowledge (K)
+        .Set_Visited (True)
+        .Set_Last_Visit (Athena.Turns.Current_Turn.Reference_Turn)
+        .Set_Owner (Owner)
+        .Set_Last_Pop (Pop)
+        .Set_Last_Ind (Ind)
+        .Done;
+
+      Athena.Ships.For_All_Ships
+        (At_Star => Star,
+         Process => Record_Ship'Access);
+
+      declare
+         Knowledge : Star_Knowledge;
+
+      begin
+         Knowledge.Load (Empire);
+
+         if not Knowledge.Visited.Contains (Star.Identifier) then
+            Knowledge.Visited.Insert (Star.Identifier, Star);
+
+            Cached_Knowledge_Map.Replace
+              (Knowledge.Empire.Identifier,
+               (Athena.Turns.Current_Turn, Knowledge));
+         end if;
+      end;
+
+   end Visit;
 
 end Athena.Knowledge.Stars;
