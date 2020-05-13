@@ -513,7 +513,9 @@ package body Athena.Knowledge.Stars is
                        (K, Ship.Identifier);
       begin
 
-         if Ship.Empire.Identifier = Empire.Identifier then
+         if not Ship.Alive
+           or else Ship.Empire.Identifier = Empire.Identifier
+         then
             return;
          end if;
 

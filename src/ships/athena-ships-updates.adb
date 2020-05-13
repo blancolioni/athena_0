@@ -428,7 +428,8 @@ package body Athena.Ships.Updates is
             for Neighbour of
               Select_Where (Star = Ship.Star and Empire = Ship.Empire)
             loop
-               if Neighbour.Identifier /= Ship.Identifier
+               if Neighbour.Alive
+                 and then Neighbour.Identifier /= Ship.Identifier
                  and then not Get_Repair (Neighbour).Has_Element
                then
                   Iterate_Components (Neighbour, Repair_Component'Access);
