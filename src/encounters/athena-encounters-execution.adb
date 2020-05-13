@@ -117,7 +117,7 @@ package body Athena.Encounters.Execution is
    overriding procedure Iterate_Allies
      (Situation : Situation_Type;
       Process   : not null access
-        procedure (Hostile : Athena.Encounters.Situation.Situation_Actor));
+        procedure (Ally : Athena.Encounters.Situation.Situation_Actor));
 
    overriding procedure Fire_Weapon
      (Situation : in out Situation_Type;
@@ -271,7 +271,7 @@ package body Athena.Encounters.Execution is
    overriding procedure Iterate_Allies
      (Situation : Situation_Type;
       Process   : not null access
-        procedure (Hostile : Athena.Encounters.Situation.Situation_Actor))
+        procedure (Ally : Athena.Encounters.Situation.Situation_Actor))
    is
       function Is_Ally
         (Actor : Athena.Encounters.Actors.Actor_Type)

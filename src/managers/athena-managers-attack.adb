@@ -202,7 +202,10 @@ package body Athena.Managers.Attack is
                   elsif Fleet.Location.Identifier
                     = Nearest.Star.Identifier
                   then
-                     Ship.Update_Ship.Set_Fleet (Fleet.Reference_Fleet).Done;
+                     Ship.Update_Ship
+                       .Set_Fleet (Fleet.Reference_Fleet)
+                       .Set_Script ("attack")
+                       .Done;
                   end if;
                elsif Ship.Destination.Has_Element
                  and then Ship.Destination.Identifier = Nearest.Star.Identifier

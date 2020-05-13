@@ -1,10 +1,10 @@
 components = {
     drive = 5
-    shield = 10
+    shield = 20
     beam = 10
     missile = 10
     repair = 10
 }
 
-default-script = attack
+default-script = defend
 default-rank = 7

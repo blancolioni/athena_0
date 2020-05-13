@@ -36,6 +36,7 @@ package body Athena.Ships.Scripts is
    begin
       Script_Map.Insert ("escape", Athena.Ships.Escape.Escape_Script);
       Script_Map.Insert ("attack", Athena.Ships.Attack.Attack_Script);
+      Script_Map.Insert ("defend", Athena.Ships.Attack.Defend_Script);
    end Load_Standard_Scripts;
 
    --------------

@@ -49,6 +49,7 @@ package body Athena.Encounters.Actors.Weapons is
          Follow_Bearing      => Athena.Trigonometry.From_Degrees (0.0),
          Is_Following        => False,
          Speed               => 0.0,
+         Speed_Limit         => Real'Last,
          Owner               =>
            Athena.Handles.Empire.Get (Ship.Empire.Reference_Empire),
          Ship                =>

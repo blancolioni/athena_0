@@ -1,6 +1,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Numerics;
+with Ada.Strings.Unbounded;
 
 with Nazar.Colors;
 
@@ -43,6 +44,11 @@ package body Athena.Encounters.Actors.Ships is
    overriding function Current_Sprite
      (Ship : Ship_Actor_Type)
       return Athena.Encounters.Sprites.Sprite_Type;
+
+   overriding function Current_Situation
+     (Actor     : Ship_Actor_Type;
+      Situation : Athena.Encounters.Situation.Situation_Interface'Class)
+      return Athena.Encounters.Situation.Situation_Actor;
 
    overriding function Image
      (Ship : Ship_Actor_Type)
@@ -367,6 +373,7 @@ package body Athena.Encounters.Actors.Ships is
          Follow_Bearing      => Athena.Trigonometry.From_Degrees (0.0),
          Is_Following        => False,
          Speed               => 0.0,
+         Speed_Limit         => Real'Last,
          Owner               =>
            Athena.Handles.Empire.Get (Ship.Empire.Reference_Empire),
          Ship                =>
@@ -381,6 +388,26 @@ package body Athena.Encounters.Actors.Ships is
          Jump_Tick           => Encounter_Tick'First,
          Jump_Destination    => Athena.Handles.Star.Empty_Handle);
    end Create_Actor;
+
+   -----------------------
+   -- Current_Situation --
+   -----------------------
+
+   overriding function Current_Situation
+     (Actor     : Ship_Actor_Type;
+      Situation : Athena.Encounters.Situation.Situation_Interface'Class)
+      return Athena.Encounters.Situation.Situation_Actor
+   is
+   begin
+      return Result : Athena.Encounters.Situation.Situation_Actor :=
+        Root_Actor_Type (Actor).Current_Situation (Situation)
+      do
+         Result.Max_Speed := Athena.Ships.Speed (Actor.Ship);
+         Result.Script    :=
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Actor.Ship.Script);
+      end return;
+   end Current_Situation;
 
    --------------------
    -- Current_Sprite --

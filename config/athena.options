@@ -1,5 +1,6 @@
 package Athena.Options is
 
+    Game_Folder             : String;
     Game_Id                 : String;
     
     Language                : String;

@@ -114,7 +114,7 @@ package body Athena.Ships.Escape is
             Actor.Start_Jump
               (Jump_Tick   =>
                  Situation.Current_Tick
-               + Encounter_Tick (Actor.Size * 10.0),
+               + Encounter_Tick (Actor.Size * 100.0),
                Destination => Find_Friendly);
          end;
       end if;

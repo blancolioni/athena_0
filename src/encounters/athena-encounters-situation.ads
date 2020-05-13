@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded;
+
 with Athena.Handles.Ship_Component;
 with Athena.Handles.Star;
 
@@ -5,14 +7,16 @@ package Athena.Encounters.Situation is
 
    type Situation_Actor is
       record
-         Index   : Encounter_Actor_Reference;
-         Class   : Encounter_Actor_Class;
-         Dead    : Boolean;
-         Mass    : Non_Negative_Real;
-         Size    : Non_Negative_Real;
-         DX, DY  : Real;
-         Heading : Athena.Trigonometry.Angle;
-         Speed   : Real;
+         Index     : Encounter_Actor_Reference;
+         Class     : Encounter_Actor_Class;
+         Dead      : Boolean;
+         Mass      : Non_Negative_Real;
+         Size      : Non_Negative_Real;
+         DX, DY    : Real;
+         Heading   : Athena.Trigonometry.Angle;
+         Speed     : Real;
+         Max_Speed : Real;
+         Script    : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    type Situation_Interface is interface;
@@ -52,7 +56,7 @@ package Athena.Encounters.Situation is
    procedure Iterate_Allies
      (Situation : Situation_Interface;
       Process   : not null access
-        procedure (Hostile : Situation_Actor))
+        procedure (Ally : Situation_Actor))
    is abstract;
 
    procedure Fire_Weapon

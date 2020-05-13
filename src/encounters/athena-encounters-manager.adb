@@ -6,7 +6,6 @@ with WL.String_Sets;
 
 with Athena.Logging;
 with Athena.Options;
-with Athena.Paths;
 
 with Athena.Identifiers;
 
@@ -62,12 +61,15 @@ package body Athena.Encounters.Manager is
       return String
    is
       Games_Path   : constant String :=
-                     Athena.Paths.Config_File ("games");
+                       Athena.Options.Game_Folder;
       Game_Id_Path : constant String :=
                        Games_Path & "/" & Athena.Options.Game_Id;
       File_Name    : constant String :=
-                       Ada.Characters.Handling.To_Lower
-                         (Encounter.Identifier)
+                       Encounter.Star.Name
+                       & Integer'Image (-Encounter.Turn.Turn_Number)
+                       & "-"
+                       & Ada.Characters.Handling.To_Lower
+                          (Encounter.Identifier)
                        & ".encounter";
 
    begin

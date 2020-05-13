@@ -73,6 +73,10 @@ package Athena.Encounters.Actors is
    procedure Update
      (Actor     : in out Root_Actor_Type);
 
+   procedure Set_Speed_Limit
+     (Actor : in out Root_Actor_Type'Class;
+      Speed : Non_Negative_Real);
+
    procedure Set_Destination
      (Actor  : in out Root_Actor_Type;
       DX, DY : Real);
@@ -167,6 +171,7 @@ private
          Follow_Range        : Non_Negative_Real;
          Follow_Bearing      : Athena.Trigonometry.Angle;
          Is_Following        : Boolean;
+         Speed_Limit         : Non_Negative_Real;
          Speed               : Non_Negative_Real;
          Owner               : Athena.Handles.Empire.Empire_Handle;
          Ship                : Athena.Handles.Ship.Ship_Handle;

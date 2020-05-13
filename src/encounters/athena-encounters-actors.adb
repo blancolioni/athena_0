@@ -71,16 +71,18 @@ package body Athena.Encounters.Actors is
       use type Athena.Trigonometry.Angle;
    begin
       return Athena.Encounters.Situation.Situation_Actor'
-        (Index   => Actor.Index,
-         Class   => Actor.Class,
-         Dead    =>
+        (Index     => Actor.Index,
+         Class     => Actor.Class,
+         Dead      =>
            Actor.Dead or else not Actor.Is_Active (Situation.Current_Tick),
-         Mass    => Actor.Mass,
-         Size    => Actor.Size,
-         DX      => Actor.Location.X - Situation.Origin.X,
-         DY      => Actor.Location.Y - Situation.Origin.Y,
-         Heading => Actor.Heading - Situation.Heading,
-         Speed   => Actor.Speed);
+         Mass      => Actor.Mass,
+         Size      => Actor.Size,
+         DX        => Actor.Location.X - Situation.Origin.X,
+         DY        => Actor.Location.Y - Situation.Origin.Y,
+         Heading   => Actor.Heading - Situation.Heading,
+         Speed     => Actor.Speed,
+         Max_Speed => 0.0,
+         Script    => <>);
    end Current_Situation;
 
    -------------------
@@ -150,6 +152,18 @@ package body Athena.Encounters.Actors is
       Actor.Destination := (Actor.Location.X + DX, Actor.Location.Y + DY);
       Actor.Have_Destination := True;
    end Set_Destination;
+
+   ---------------------
+   -- Set_Speed_Limit --
+   ---------------------
+
+   procedure Set_Speed_Limit
+     (Actor : in out Root_Actor_Type'Class;
+      Speed : Non_Negative_Real)
+   is
+   begin
+      Actor.Speed_Limit := Speed;
+   end Set_Speed_Limit;
 
    ----------------
    -- Start_Jump --
@@ -234,8 +248,9 @@ package body Athena.Encounters.Actors is
             then
                Actor.Speed := Real'Max (Actor.Speed - Accel, 0.0);
             else
-               Actor.Speed := Actor.Speed
-                 + (1.0 - Actor.Speed / Speed) * Accel;
+               Actor.Speed :=
+                 Real'Min (Actor.Speed_Limit,
+                           Actor.Speed + (1.0 - Actor.Speed / Speed) * Accel);
             end if;
          end;
 

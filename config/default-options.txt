@@ -1,3 +1,4 @@
+game-folder = games
 game-id = test-game-1
 language = en
 randomise = yes

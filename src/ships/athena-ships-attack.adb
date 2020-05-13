@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded;
+
 with Athena.Encounters.Actors;
 with Athena.Encounters.Situation;
 
@@ -12,7 +14,9 @@ package body Athena.Ships.Attack is
 
    type Attack_Script_Type is
      new Athena.Encounters.Scripts.Encounter_Script_Interface with
-       null record;
+      record
+         Defensive : Boolean;
+      end record;
 
    overriding procedure Update
      (Script    : Attack_Script_Type;
@@ -41,8 +45,21 @@ package body Athena.Ships.Attack is
      return Athena.Encounters.Scripts.Encounter_Script_Interface'Class
    is
    begin
-      return Script : Attack_Script_Type;
+      return Attack_Script_Type'
+        (Defensive => False);
    end Attack_Script;
+
+   -------------------
+   -- Defend_Script --
+   -------------------
+
+   function Defend_Script
+     return Athena.Encounters.Scripts.Encounter_Script_Interface'Class
+   is
+   begin
+      return Attack_Script_Type'
+        (Defensive => True);
+   end Defend_Script;
 
    ------------
    -- Update --
@@ -54,8 +71,6 @@ package body Athena.Ships.Attack is
       Situation : in out
         Athena.Encounters.Situation.Situation_Interface'Class)
    is
-      pragma Unreferenced (Script);
-
       Hostiles : List_Of_Actors.List;
 
       procedure Add_Hostile
@@ -82,8 +97,9 @@ package body Athena.Ships.Attack is
 
       Range_Sorting.Sort (Hostiles);
 
-      if not Actor.Is_Following
-        or else Situation.Get (Actor.Following_Actor).Dead
+      if not Script.Defensive
+        and then (not Actor.Is_Following
+                  or else Situation.Get (Actor.Following_Actor).Dead)
       then
          declare
             use Athena.Trigonometry;
@@ -94,14 +110,37 @@ package body Athena.Ships.Attack is
             Total_Range_Weight : Non_Negative_Real := 0.0;
             Total_Weight       : Non_Negative_Real := 0.0;
 
+            Speed_Limit : Non_Negative_Real := Non_Negative_Real'Last;
+
             function Ideal_Range return Non_Negative_Real
             is (if Total_Weight = 0.0
                 then 1.0e6
                 else Real'Max (Total_Range_Weight / Total_Weight, 20.0));
 
+            procedure Check_Ally
+              (Ally : Athena.Encounters.Situation.Situation_Actor);
+
             procedure Check_Weapon
               (Component : Athena.Handles.Ship_Component.Ship_Component_Class;
                Charge    : Unit_Real);
+
+            ----------------
+            -- Check_Ally --
+            ----------------
+
+            procedure Check_Ally
+              (Ally : Athena.Encounters.Situation.Situation_Actor)
+            is
+               use type Ada.Strings.Unbounded.Unbounded_String;
+            begin
+               if Ally.Script = "attack" then
+                  if Ally.Max_Speed > 0.0
+                    and then Ally.Max_Speed < Speed_Limit
+                  then
+                     Speed_Limit := Ally.Max_Speed;
+                  end if;
+               end if;
+            end Check_Ally;
 
             ------------------
             -- Check_Weapon --
@@ -128,6 +167,11 @@ package body Athena.Ships.Attack is
             end Check_Weapon;
 
          begin
+
+            Situation.Iterate_Allies (Check_Ally'Access);
+
+            Actor.Set_Speed_Limit (Speed_Limit);
+
             Actor.Iterate_Beam_Weapons (Check_Weapon'Access);
 
             if Total_Weight = 0.0 then
