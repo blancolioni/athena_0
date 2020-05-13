@@ -1,3 +1,5 @@
+with Ada.Containers.Doubly_Linked_Lists;
+
 with WL.String_Maps;
 with WL.String_Sets;
 
@@ -348,12 +350,25 @@ package body Athena.Updates is
 
    procedure Run_Encounters is
 
+      type Force_Record is
+         record
+            Empire : Athena.Handles.Empire.Empire_Handle;
+            Size   : Natural;
+         end record;
+
+      package Force_Lists is
+        new Ada.Containers.Doubly_Linked_Lists (Force_Record);
+
       type Star_Record is
          record
             Star    : Athena.Handles.Star.Star_Handle;
             Ships   : Athena.Ships.Ship_Lists.List;
+            Forces  : Force_Lists.List;
             Hostile : Boolean;
          end record;
+
+      function Encounter_Size (Rec : Star_Record) return Positive
+        with Pre => Rec.Hostile;
 
       package Star_Record_Maps is
         new WL.String_Maps (Star_Record);
@@ -361,6 +376,25 @@ package body Athena.Updates is
       Star_Map : Star_Record_Maps.Map;
 
       procedure Record_Ship (Ship : Athena.Handles.Ship.Ship_Class);
+
+      --------------------
+      -- Encounter_Size --
+      --------------------
+
+      function Encounter_Size (Rec : Star_Record) return Positive is
+
+         use Force_Lists;
+
+         function More (Left, Right : Force_Record) return Boolean
+         is (Left.Size > Right.Size);
+
+         package Force_Sorting is new Force_Lists.Generic_Sorting (More);
+
+         Sorted_List : Force_Lists.List := Rec.Forces;
+      begin
+         Force_Sorting.Sort (Sorted_List);
+         return Element (Next (Sorted_List.First)).Size;
+      end Encounter_Size;
 
       -----------------
       -- Record_Ship --
@@ -380,7 +414,8 @@ package body Athena.Updates is
                Star_Record'
                  (Star    =>
                       Athena.Handles.Star.Get (Ship.Star.Reference_Star),
-                  Ships   => Athena.Ships.Ship_Lists.Empty_List,
+                  Ships   => <>,
+                  Forces  => <>,
                   Hostile => False));
          end if;
 
@@ -408,9 +443,26 @@ package body Athena.Updates is
             end;
          end if;
 
-         Star_Map (Key).Ships.Append
-           (Athena.Handles.Ship.Get (Ship.Reference_Ship));
+         declare
+            Rec : Star_Record renames Star_Map (Key);
+            Found_Empire : Boolean := False;
+         begin
+            Rec.Ships.Append
+              (Athena.Handles.Ship.Get (Ship.Reference_Ship));
+            for Force of Rec.Forces loop
+               if Force.Empire.Identifier = Ship.Empire.Identifier then
+                  Force.Size := Force.Size + 1;
+                  Found_Empire := True;
+                  exit;
+               end if;
+            end loop;
 
+            if not Found_Empire then
+               Rec.Forces.Append
+                 ((Athena.Handles.Empire.Get (Ship.Empire.Reference_Empire),
+                  1));
+            end if;
+         end;
       end Record_Ship;
 
    begin
@@ -419,7 +471,7 @@ package body Athena.Updates is
       for Element of Star_Map loop
          if Element.Hostile then
             Athena.Encounters.Manager.Resolve_Encounter
-              (Element.Star, Element.Ships);
+              (Element.Star, Element.Ships, Encounter_Size (Element));
          end if;
       end loop;
 

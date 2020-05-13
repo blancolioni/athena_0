@@ -138,14 +138,15 @@ package body Athena.Encounters.Manager is
 
    procedure Resolve_Encounter
      (Star  : Athena.Handles.Star.Star_Handle;
-      Ships : Athena.Ships.Ship_Lists.List)
+      Ships : Athena.Ships.Ship_Lists.List;
+      Size  : Positive)
    is
       Encounter : constant Athena.Handles.Encounter.Encounter_Handle :=
                     Athena.Handles.Encounter.Create
                       (Identifier => Athena.Identifiers.Next_Identifier,
                        Turn       => Athena.Turns.Current_Turn,
                        Star       => Star,
-                       Size       => Natural (Ships.Length));
+                       Size       => Size);
       Manager : Encounter_Manager_Type :=
                   Encounter_Manager_Type'
                     (Encounter => Encounter,
@@ -156,7 +157,8 @@ package body Athena.Encounters.Manager is
    begin
       Athena.Logging.Log
         ("Resolving the Battle of " & Star.Name
-         & "; ships involved" & Natural'Image (Natural (Ships.Length)));
+         & "; ships involved" & Natural'Image (Natural (Ships.Length))
+         & "; encounter size" & Size'Image);
 
       for Ship of Ships loop
          Athena.Handles.Participant.Create

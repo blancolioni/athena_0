@@ -17,7 +17,8 @@ package Athena.Encounters.Manager is
 
    procedure Resolve_Encounter
      (Star  : Athena.Handles.Star.Star_Handle;
-      Ships : Athena.Ships.Ship_Lists.List);
+      Ships : Athena.Ships.Ship_Lists.List;
+      Size  : Positive);
 
    function Load_Encounter
      (Encounter : Athena.Handles.Encounter.Encounter_Class)
