@@ -1,6 +1,11 @@
 with Athena.Logging;
 
+with Athena.Turns;
+
 with Athena.Handles.Relationship.Selections;
+with Athena.Handles.Turn;
+
+with Athena.Db.War;
 
 package body Athena.Treaties is
 
@@ -39,6 +44,13 @@ package body Athena.Treaties is
         .Set_War (True)
         .Set_Opinion (New_Opinion)
         .Done;
+
+      Athena.Handles.War.Create
+        (Attacker => E1,
+         Defender => E2,
+         Start    => Athena.Turns.Current_Turn,
+         Finish   => Athena.Handles.Turn.Empty_Handle);
+
       Athena.Logging.Log
         (E1.Name & " declared war on " & E2.Name);
    end Declare_War;
@@ -68,5 +80,35 @@ package body Athena.Treaties is
             Trade   => False);
       end if;
    end Get_Relationship;
+
+   -------------
+   -- Get_War --
+   -------------
+
+   function Get_War
+     (E1, E2 : Athena.Handles.Empire.Empire_Class)
+      return Athena.Handles.War.War_Class
+   is
+      War_1 : constant Athena.Db.War.War_Type :=
+                Athena.Db.War.Get_By_War
+                  (E1.Reference_Empire, E2.Reference_Empire,
+                   Athena.Db.Null_Turn_Reference);
+      War_2 : constant Athena.Db.War.War_Type :=
+                Athena.Db.War.Get_By_War
+                  (E2.Reference_Empire, E1.Reference_Empire,
+                   Athena.Db.Null_Turn_Reference);
+      War_Ref : constant Athena.Db.War_Reference :=
+                  (if War_1.Has_Element
+                   then War_1.Get_War_Reference
+                   else War_2.Get_War_Reference);
+   begin
+      if not War_1.Has_Element and then not War_2.Has_Element then
+         Athena.Logging.Log
+           ("warning: encounter but no war between "
+            & E1.Name & " and " & E2.Name);
+      end if;
+
+      return Athena.Handles.War.Get (War_Ref);
+   end Get_War;
 
 end Athena.Treaties;

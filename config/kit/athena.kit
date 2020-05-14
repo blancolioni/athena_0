@@ -76,6 +76,7 @@ record Star : Has_Identifier, Has_Name is
     Y                 : Long_Float;
     key Core_Distance : Long_Float;
     key Owner         : Empire;
+    key Occupier      : Empire;
     Space             : Positive;
     Resource          : Long_Float;
     Habitability      : Long_Float;
@@ -100,6 +101,14 @@ record Relationship is
     key Enemies  with From, War;
     key Traders  with From, Trade;
 end Relationship;
+
+record War is
+    key Attacker : Empire;
+    key Defender : Empire;
+    Start        : Turn;
+    Finish       : Turn;
+    unique key War with Attacker, Defender, Finish;
+end War;
 
 record Star_Distance is
     key From : Star;
@@ -293,8 +302,10 @@ record Fleet_Journey : Journey is
 end Fleet_Journey;
 
 record Encounter : Has_Identifier is
+    key War;
     key Turn;
     key Star;
+    Victor : Empire;
     Size : Positive;
 end Encounter;
 
@@ -308,5 +319,10 @@ record Participant is
     Ship;
     unique key Participant with Encounter, Ship;
 end Participant;
+
+record Ship_Lost is
+    key Encounter;
+    Ship;
+end Ship_Lost;
 
 end Athena;

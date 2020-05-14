@@ -12,6 +12,7 @@ with Athena.Identifiers;
 with Athena.Turns;
 
 with Athena.Handles.Antagonist;
+with Athena.Handles.Empire;
 with Athena.Handles.Participant;
 
 package body Athena.Encounters.Manager is
@@ -140,12 +141,15 @@ package body Athena.Encounters.Manager is
 
    procedure Resolve_Encounter
      (Star  : Athena.Handles.Star.Star_Handle;
+      War   : Athena.Handles.War.War_Class;
       Ships : Athena.Ships.Ship_Lists.List;
       Size  : Positive)
    is
       Encounter : constant Athena.Handles.Encounter.Encounter_Handle :=
                     Athena.Handles.Encounter.Create
                       (Identifier => Athena.Identifiers.Next_Identifier,
+                       War        => War,
+                       Victor     => Athena.Handles.Empire.Empty_Handle,
                        Turn       => Athena.Turns.Current_Turn,
                        Star       => Star,
                        Size       => Size);
