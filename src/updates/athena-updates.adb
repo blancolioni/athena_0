@@ -33,6 +33,7 @@ with Athena.Handles.Ship.Selections;
 with Athena.Handles.Ship_Build_Order;
 with Athena.Handles.Star;
 with Athena.Handles.Upgrade_Order;
+with Athena.Handles.War;
 
 package body Athena.Updates is
 
@@ -362,6 +363,7 @@ package body Athena.Updates is
       type Star_Record is
          record
             Star    : Athena.Handles.Star.Star_Handle;
+            War     : Athena.Handles.War.War_Handle;
             Ships   : Athena.Ships.Ship_Lists.List;
             Forces  : Force_Lists.List;
             Hostile : Boolean;
@@ -414,6 +416,7 @@ package body Athena.Updates is
                Star_Record'
                  (Star    =>
                       Athena.Handles.Star.Get (Ship.Star.Reference_Star),
+                  War     => Athena.Handles.War.Empty_Handle,
                   Ships   => <>,
                   Forces  => <>,
                   Hostile => False));
@@ -437,6 +440,15 @@ package body Athena.Updates is
                   if Athena.Treaties.At_War
                     (Other_Ship.Empire, Ship.Empire)
                   then
+                     declare
+                        War : constant Athena.Handles.War.War_Class :=
+                                Athena.Treaties.Get_War
+                                  (Other_Ship.Empire, Ship.Empire);
+                     begin
+                        Star_Map (Key).War :=
+                          Athena.Handles.War.Get (War.Reference_War);
+                     end;
+
                      Star_Map (Key).Hostile := True;
                   end if;
                end loop;
@@ -471,7 +483,10 @@ package body Athena.Updates is
       for Element of Star_Map loop
          if Element.Hostile then
             Athena.Encounters.Manager.Resolve_Encounter
-              (Element.Star, Element.Ships, Encounter_Size (Element));
+              (Star  => Element.Star,
+               War   => Element.War,
+               Ships => Element.Ships,
+               Size  => Encounter_Size (Element));
          end if;
       end loop;
 

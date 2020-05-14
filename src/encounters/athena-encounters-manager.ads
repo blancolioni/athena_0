@@ -8,6 +8,7 @@ with Athena.Encounters.Execution;
 with Athena.Encounters.Sprites;
 
 with Athena.Handles.Star;
+with Athena.Handles.War;
 
 package Athena.Encounters.Manager is
 
@@ -17,6 +18,7 @@ package Athena.Encounters.Manager is
 
    procedure Resolve_Encounter
      (Star  : Athena.Handles.Star.Star_Handle;
+      War   : Athena.Handles.War.War_Class;
       Ships : Athena.Ships.Ship_Lists.List;
       Size  : Positive);
 

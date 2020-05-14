@@ -230,6 +230,8 @@ package body Athena.Configure is
                                 Name          => Star_Name,
                                 Owner         =>
                                   Athena.Db.Null_Empire_Reference,
+                                Occupier      =>
+                                  Athena.Db.Null_Empire_Reference,
                                 Space         => Space,
                                 Resource      => Resource,
                                 Habitability  => Habitability);
