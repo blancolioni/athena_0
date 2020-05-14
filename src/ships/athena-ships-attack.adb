@@ -134,7 +134,7 @@ package body Athena.Ships.Attack is
                use type Ada.Strings.Unbounded.Unbounded_String;
             begin
                if Ally.Script = "attack" then
-                  if Ally.Max_Speed > 0.0
+                  if Ally.Max_Speed > 1.0
                     and then Ally.Max_Speed < Speed_Limit
                   then
                      Speed_Limit := Ally.Max_Speed;
